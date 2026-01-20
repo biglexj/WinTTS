@@ -31,3 +31,17 @@
 ---
 
 **Notas**: Esta es la primera versión estable de WinTTS. Futuras actualizaciones incluirán más características y mejoras basadas en el feedback de la comunidad.
+
+---
+
+## v1.0.1 - Próxima Versión (Planeada)
+
+### 🎯 Características Planeadas
+- **Control de Velocidad**: Ajuste de la velocidad de reproducción de voz
+- **Control de Tono**: Modificación del tono de voz (-10 a +10)
+- **Exportación de Audio**: Guardar el texto sintetizado como archivo de audio
+  - Formato WAV (sin compresión)
+  - Formato MP3 (comprimido)
+
+### 📝 Estado
+Esta versión está en planificación. Las características listadas pueden cambiar según las prioridades del desarrollo.
