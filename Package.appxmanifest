@@ -6,12 +6,12 @@
 
   <Identity
     Name="WinTTS.Project"
-    Publisher="CN=BiglexJ"
+    Publisher="CN=biglexj"
     Version="1.0.0.0" />
 
   <Properties>
     <DisplayName>WinTTS</DisplayName>
-    <PublisherDisplayName>BiglexJ</PublisherDisplayName>
+    <PublisherDisplayName>biglexj</PublisherDisplayName>
     <Logo>Image\StoreLogo.png</Logo>
   </Properties>
 
@@ -20,7 +20,7 @@
   </Dependencies>
 
   <Resources>
-    <Resource Language="x-generate"/>
+    <Resource Language="es-ES"/>
   </Resources>
 
   <Applications>
