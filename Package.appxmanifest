@@ -5,8 +5,8 @@
   xmlns:rescap="http://schemas.microsoft.com/appx/manifest/foundation/windows10/restrictedcapabilities">
 
   <Identity
-    Name="WinTTS.Project"
-    Publisher="CN=biglexj"
+    Name="biglexj.WinTTS"
+    Publisher="CN=C90A4D85-591F-46E3-AA49-75B551A23CED"
     Version="1.0.0.0" />
 
   <Properties>

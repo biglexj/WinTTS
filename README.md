@@ -32,5 +32,40 @@ Software de Texto a Voz (TTS) local para Windows
 - **UI Framework**: WPF (Windows Presentation Foundation)
 - **Speech Engine**: System.Speech.Synthesis
 
+## 📚 Documentación
+
+### Guías de Empaquetado y Distribución
+
+- **[docs/publicar.md](docs/publicar.md)** - Guía completa de publicación
+  - Ejecutable portable (EXE)
+  - Paquete MSIX
+  - Comparación de métodos
+  - Publicación en WinGet y Microsoft Store
+
+- **[docs/MSIX_GUIDE.md](docs/MSIX_GUIDE.md)** - Guía completa de MSIX
+  - Proceso de creación paso a paso
+  - Certificados y firma
+  - Publicación en Microsoft Store
+  - Solución de problemas
+
+- **[docs/SCRIPTS_REFERENCE.md](docs/SCRIPTS_REFERENCE.md)** - Referencia de scripts
+  - Scripts para MSIX
+  - Scripts para EXE portable
+  - Flujos de trabajo
+  - Comandos útiles
+
+- **[docs/MSIX_PACKAGING.md](docs/MSIX_PACKAGING.md)** - Guía rápida de MSIX
+
+### Generar Paquetes
+
+```powershell
+# Ejecutable portable (EXE) - Rápido y simple
+.\scripts\build-exe.ps1
+
+# Paquete MSIX - Para Microsoft Store
+.\scripts\build-msix.ps1
+.\scripts\sign-package.ps1
+```
+
 ## ✒️ Créditos
 Creado por **@biglexj**
