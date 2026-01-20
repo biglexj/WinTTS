@@ -2,6 +2,8 @@
 
 Una aplicación de escritorio nativa para Windows (WPF/C#) que convierte texto a voz (TTS) de forma local, con soporte para limpiar formato Markdown.
 
+Software de Texto a Voz (TTS) local para Windows
+
 ## ✨ Características
 
 - **Limpieza de Markdown**: Elimina automáticamente negritas, títulos, enlaces y bloques de código antes de hablar.
