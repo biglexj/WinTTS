@@ -39,6 +39,9 @@
 ### 🎯 Características Planeadas
 - **Control de Velocidad**: Ajuste de la velocidad de reproducción de voz
 - **Control de Tono**: Modificación del tono de voz (-10 a +10)
+- **Poder cargar archivos de texto (.txt, .md)**: Para poder leer el texto de un archivo
+- **Poder guardar el texto en un archivo .txt, .md**: Para poder guardar el texto en un archivo
+- **Pausar y reanudar la reproducción**: Para poder pausar y reanudar la reproducción
 - **Exportación de Audio**: Guardar el texto sintetizado como archivo de audio
   - Formato WAV (sin compresión)
   - Formato MP3 (comprimido)
