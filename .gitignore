@@ -2,3 +2,7 @@
 /obj/
 /publish/
 /.vs/
+
+# Carpetas temporales y de pruebas (Reglas del Agente)
+/test/
+/scratch/
