@@ -19,9 +19,10 @@ $ErrorActionPreference = "Stop"
 $projectRoot = Split-Path -Parent $PSScriptRoot
 $projectFile = Join-Path $projectRoot "WinTTS.csproj"
 $manifestSource = Join-Path $projectRoot "Package.appxmanifest"
-$outputDir = Join-Path $projectRoot "publish\msix"
-$packageDir = Join-Path $outputDir "package"
-$validationDir = Join-Path $outputDir "validation"
+$releaseDir = Join-Path $projectRoot "release"
+$temporaryRoot = Join-Path $projectRoot "obj\msix"
+$packageDir = Join-Path $temporaryRoot "package"
+$validationDir = Join-Path $temporaryRoot "validation"
 
 function Get-LatestWindowsSdkTool {
     param([Parameter(Mandatory)][string]$Name)
@@ -54,23 +55,27 @@ if (-not $Version) {
 $packageVersion = "$Version.0"
 $identity.Version = $packageVersion
 $artifactName = "WinTTS-Windows-x64-$Version.msix"
-$msixPath = Join-Path $outputDir $artifactName
+$msixPath = Join-Path $releaseDir $artifactName
+$hashPath = Join-Path $releaseDir "SHA256SUMS.txt"
 $makeAppx = Get-LatestWindowsSdkTool -Name "makeappx.exe"
 $signTool = Get-LatestWindowsSdkTool -Name "signtool.exe"
 
-$resolvedOutput = [System.IO.Path]::GetFullPath($outputDir)
+$resolvedTemporaryRoot = [System.IO.Path]::GetFullPath($temporaryRoot).TrimEnd('\') + '\'
 foreach ($directory in @($packageDir, $validationDir)) {
     $resolvedDirectory = [System.IO.Path]::GetFullPath($directory)
-    if (-not $resolvedDirectory.StartsWith($resolvedOutput, [System.StringComparison]::OrdinalIgnoreCase)) {
-        throw "Directorio temporal fuera de publish\msix: $resolvedDirectory"
+    if (-not ($resolvedDirectory + '\').StartsWith(
+        $resolvedTemporaryRoot,
+        [System.StringComparison]::OrdinalIgnoreCase)) {
+        throw "Directorio temporal fuera de obj\msix: $resolvedDirectory"
     }
     if (Test-Path -LiteralPath $resolvedDirectory) {
         Remove-Item -LiteralPath $resolvedDirectory -Recurse -Force
     }
 }
 
-if (Test-Path -LiteralPath $outputDir) {
-    Get-ChildItem -LiteralPath $outputDir -File -Filter "*.msix" |
+New-Item -ItemType Directory -Path $releaseDir -Force | Out-Null
+if (Test-Path -LiteralPath $releaseDir) {
+    Get-ChildItem -LiteralPath $releaseDir -File -Filter "WinTTS-Windows-x64-*.msix" |
         ForEach-Object { Remove-Item -LiteralPath $_.FullName -Force }
 }
 
@@ -140,6 +145,15 @@ if (-not (Test-Path -LiteralPath (Join-Path $validationDir "WinTTS.exe"))) {
 
 $hash = (Get-FileHash -LiteralPath $msixPath -Algorithm SHA256).Hash.ToLowerInvariant()
 $sizeMb = [math]::Round((Get-Item -LiteralPath $msixPath).Length / 1MB, 2)
+
+$hashLines = @(Get-ChildItem -LiteralPath $releaseDir -File |
+    Where-Object { $_.Name -ne "SHA256SUMS.txt" } |
+    Sort-Object Name |
+    ForEach-Object {
+        $fileHash = (Get-FileHash -LiteralPath $_.FullName -Algorithm SHA256).Hash.ToLowerInvariant()
+        "$fileHash  $($_.Name)"
+    })
+$hashLines | Set-Content -LiteralPath $hashPath -Encoding UTF8
 
 foreach ($directory in @($packageDir, $validationDir)) {
     if (Test-Path -LiteralPath $directory) {

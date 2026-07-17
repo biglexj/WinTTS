@@ -11,7 +11,7 @@ $root = $PSScriptRoot
 $projectFile = Join-Path $root "WinTTS.csproj"
 $manifestFile = Join-Path $root "Package.appxmanifest"
 $releaseNotesPath = Join-Path $root $ReleaseNotesFile
-$publishDir = Join-Path $root "publish\exe"
+$publishDir = Join-Path $root "obj\release-publish"
 $releaseDir = Join-Path $root "release"
 
 function Invoke-Checked {
@@ -164,7 +164,7 @@ if (-not $SkipBuild) {
         "-p:DebugType=None",
         "-p:DebugSymbols=false")
 } elseif (-not (Test-Path -LiteralPath (Join-Path $publishDir "WinTTS.exe"))) {
-    throw "-SkipBuild requiere un ejecutable existente en publish\exe\WinTTS.exe."
+    throw "-SkipBuild requiere un ejecutable existente en obj\release-publish\WinTTS.exe."
 }
 
 $resolvedRoot = [System.IO.Path]::GetFullPath($root).TrimEnd('\') + '\'
