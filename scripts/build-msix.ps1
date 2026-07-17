@@ -1,180 +1,161 @@
-# Script para compilar y generar el paquete MSIX de WinTTS
-# Autor: biglexj
-# Fecha: 2026-01-20
+# Genera un paquete MSIX x64 autocontenido para WinTTS.
 
+[CmdletBinding()]
 param(
+    [ValidateSet("Debug", "Release")]
     [string]$Configuration = "Release",
-    [string]$Platform = "x64",
-    [string]$SdkVersion = "10.0.26100.0"
+
+    [ValidateSet("win-x64")]
+    [string]$Runtime = "win-x64",
+
+    [string]$Version,
+
+    [string]$CertificatePath,
+
+    [string]$CertificatePassword
 )
 
-# Configuración
 $ErrorActionPreference = "Stop"
-$ProjectRoot = Split-Path -Parent $PSScriptRoot
-$ProjectName = "WinTTS"
-$OutputDir = Join-Path $ProjectRoot "publish\msix"
+$projectRoot = Split-Path -Parent $PSScriptRoot
+$projectFile = Join-Path $projectRoot "WinTTS.csproj"
+$manifestSource = Join-Path $projectRoot "Package.appxmanifest"
+$outputDir = Join-Path $projectRoot "publish\msix"
+$packageDir = Join-Path $outputDir "package"
+$validationDir = Join-Path $outputDir "validation"
 
-Write-Host "==================================================" -ForegroundColor Cyan
-Write-Host "  WinTTS - Generador de Paquetes MSIX" -ForegroundColor Cyan
-Write-Host "==================================================" -ForegroundColor Cyan
-Write-Host ""
+function Get-LatestWindowsSdkTool {
+    param([Parameter(Mandatory)][string]$Name)
 
-# Verificar que existan las herramientas necesarias
-Write-Host "[1/6] Verificando herramientas..." -ForegroundColor Yellow
+    $sdkRoot = Join-Path ${env:ProgramFiles(x86)} "Windows Kits\10\bin"
+    $candidate = Get-ChildItem -LiteralPath $sdkRoot -Directory -ErrorAction Stop |
+        Where-Object { $_.Name -match '^\d+\.\d+\.\d+\.\d+$' } |
+        Sort-Object { [version]$_.Name } -Descending |
+        ForEach-Object { Join-Path $_.FullName "x64\$Name" } |
+        Where-Object { Test-Path -LiteralPath $_ } |
+        Select-Object -First 1
 
-# Buscar MSBuild
-$msbuildPath = & "${env:ProgramFiles(x86)}\Microsoft Visual Studio\Installer\vswhere.exe" `
-    -latest -requires Microsoft.Component.MSBuild -find MSBuild\**\Bin\MSBuild.exe `
-    -prerelease | Select-Object -First 1
+    if (-not $candidate) {
+        throw "No se encontro $Name en el Windows SDK."
+    }
 
-if (-not $msbuildPath) {
-    Write-Host "❌ No se encontró MSBuild. Asegúrate de tener Visual Studio Build Tools instalado." -ForegroundColor Red
-    exit 1
+    return $candidate
 }
 
-Write-Host "✅ MSBuild encontrado: $msbuildPath" -ForegroundColor Green
-
-# Buscar MakeAppx
-$sdkBinPath = "C:\Program Files (x86)\Windows Kits\10\bin\$SdkVersion\x64"
-$makeAppxPath = Join-Path $sdkBinPath "makeappx.exe"
-$signToolPath = Join-Path $sdkBinPath "signtool.exe"
-
-if (-not (Test-Path $makeAppxPath)) {
-    Write-Host "❌ No se encontró makeappx.exe en: $sdkBinPath" -ForegroundColor Red
-    Write-Host "   Versiones de SDK disponibles:" -ForegroundColor Yellow
-    Get-ChildItem "C:\Program Files (x86)\Windows Kits\10\bin" -Directory | Select-Object Name
-    exit 1
+if (-not (Test-Path -LiteralPath $projectFile)) {
+    throw "No se encontro el proyecto: $projectFile"
 }
 
-Write-Host "✅ MakeAppx encontrado: $makeAppxPath" -ForegroundColor Green
-Write-Host "✅ SignTool encontrado: $signToolPath" -ForegroundColor Green
-
-# Limpiar compilaciones anteriores
-Write-Host ""
-Write-Host "[2/6] Limpiando compilaciones anteriores..." -ForegroundColor Yellow
-
-$binPath = Join-Path $ProjectRoot "bin"
-$objPath = Join-Path $ProjectRoot "obj"
-
-if (Test-Path $binPath) {
-    Remove-Item $binPath -Recurse -Force
-    Write-Host "✅ Carpeta bin limpiada" -ForegroundColor Green
+[xml]$manifest = Get-Content -LiteralPath $manifestSource -Raw
+$identity = $manifest.Package.Identity
+if (-not $Version) {
+    $Version = ([version]$identity.Version).ToString(3)
 }
 
-if (Test-Path $objPath) {
-    Remove-Item $objPath -Recurse -Force
-    Write-Host "✅ Carpeta obj limpiada" -ForegroundColor Green
-}
+$packageVersion = "$Version.0"
+$identity.Version = $packageVersion
+$artifactName = "WinTTS-Windows-x64-$Version.msix"
+$msixPath = Join-Path $outputDir $artifactName
+$makeAppx = Get-LatestWindowsSdkTool -Name "makeappx.exe"
+$signTool = Get-LatestWindowsSdkTool -Name "signtool.exe"
 
-# Crear directorio de salida
-if (-not (Test-Path $OutputDir)) {
-    New-Item -ItemType Directory -Path $OutputDir -Force | Out-Null
-}
-
-# Compilar el proyecto
-Write-Host ""
-Write-Host "[3/6] Compilando proyecto..." -ForegroundColor Yellow
-
-$projectFile = Join-Path $ProjectRoot "$ProjectName.csproj"
-
-& $msbuildPath $projectFile `
-    /p:Configuration=$Configuration `
-    /p:Platform=AnyCPU `
-    /p:PublishProfile=FolderProfile `
-    /t:Restore,Build `
-    /v:minimal
-
-if ($LASTEXITCODE -ne 0) {
-    Write-Host "❌ Error al compilar el proyecto" -ForegroundColor Red
-    exit 1
-}
-
-Write-Host "✅ Proyecto compilado exitosamente" -ForegroundColor Green
-
-# Preparar archivos para el paquete
-Write-Host ""
-Write-Host "[4/6] Preparando archivos para el paquete..." -ForegroundColor Yellow
-
-$publishDir = Join-Path $ProjectRoot "bin\$Configuration\net10.0-windows"
-$packageDir = Join-Path $OutputDir "package"
-
-if (Test-Path $packageDir) {
-    Remove-Item $packageDir -Recurse -Force
-}
-
-New-Item -ItemType Directory -Path $packageDir -Force | Out-Null
-
-# Copiar archivos compilados
-Copy-Item -Path "$publishDir\*" -Destination $packageDir -Recurse -Force
-
-# Copiar manifest y actualizar tokens
-$manifestSource = Join-Path $ProjectRoot "Package.appxmanifest"
-$manifestDest = Join-Path $packageDir "AppxManifest.xml"
-$manifestContent = Get-Content $manifestSource -Raw
-$manifestContent = $manifestContent -replace '\$targetnametoken\$', $ProjectName
-$manifestContent | Set-Content $manifestDest -Encoding UTF8
-
-# Copiar imágenes
-$imageSourceDir = Join-Path $ProjectRoot "Image"
-$imageDestDir = Join-Path $packageDir "Image"
-
-if (Test-Path $imageSourceDir) {
-    Copy-Item -Path $imageSourceDir -Destination $packageDir -Recurse -Force
-}
-
-Write-Host "✅ Archivos preparados en: $packageDir" -ForegroundColor Green
-
-# Generar el paquete MSIX
-Write-Host ""
-Write-Host "[5/6] Generando paquete MSIX..." -ForegroundColor Yellow
-
-$msixPath = Join-Path $OutputDir "$ProjectName.msix"
-
-if (Test-Path $msixPath) {
-    Remove-Item $msixPath -Force
-}
-
-& $makeAppxPath pack /d $packageDir /p $msixPath /o
-
-if ($LASTEXITCODE -ne 0) {
-    Write-Host "❌ Error al generar el paquete MSIX" -ForegroundColor Red
-    exit 1
-}
-
-Write-Host "✅ Paquete MSIX generado: $msixPath" -ForegroundColor Green
-
-# Firmar el paquete
-Write-Host ""
-Write-Host "[6/6] Firmando paquete MSIX..." -ForegroundColor Yellow
-
-$certPath = Join-Path $ProjectRoot "WinTTS_Certificate.pfx"
-
-if (-not (Test-Path $certPath)) {
-    Write-Host "⚠️  No se encontró el certificado en: $certPath" -ForegroundColor Yellow
-    Write-Host "   El paquete MSIX se generó pero no está firmado." -ForegroundColor Yellow
-    Write-Host "   Para firmarlo manualmente, ejecuta: .\scripts\sign-msix.ps1" -ForegroundColor Yellow
-} else {
-    & $signToolPath sign /fd SHA256 /a /f $certPath /p "" $msixPath
-    
-    if ($LASTEXITCODE -ne 0) {
-        Write-Host "⚠️  Error al firmar el paquete" -ForegroundColor Yellow
-        Write-Host "   El paquete se generó pero no está firmado." -ForegroundColor Yellow
-    } else {
-        Write-Host "✅ Paquete firmado exitosamente" -ForegroundColor Green
+$resolvedOutput = [System.IO.Path]::GetFullPath($outputDir)
+foreach ($directory in @($packageDir, $validationDir)) {
+    $resolvedDirectory = [System.IO.Path]::GetFullPath($directory)
+    if (-not $resolvedDirectory.StartsWith($resolvedOutput, [System.StringComparison]::OrdinalIgnoreCase)) {
+        throw "Directorio temporal fuera de publish\msix: $resolvedDirectory"
+    }
+    if (Test-Path -LiteralPath $resolvedDirectory) {
+        Remove-Item -LiteralPath $resolvedDirectory -Recurse -Force
     }
 }
 
-# Resumen
-Write-Host ""
-Write-Host "==================================================" -ForegroundColor Cyan
-Write-Host "  ✅ Proceso completado exitosamente" -ForegroundColor Green
-Write-Host "==================================================" -ForegroundColor Cyan
-Write-Host ""
-Write-Host "📦 Paquete MSIX: $msixPath" -ForegroundColor White
-Write-Host "📁 Tamaño: $([math]::Round((Get-Item $msixPath).Length / 1MB, 2)) MB" -ForegroundColor White
-Write-Host ""
-Write-Host "Próximos pasos:" -ForegroundColor Yellow
-Write-Host "  1. Instalar el certificado: .\scripts\install-certificate.ps1" -ForegroundColor White
-Write-Host "  2. Instalar la aplicación: Add-AppxPackage '$msixPath'" -ForegroundColor White
-Write-Host "  3. O subir a Microsoft Partner Center para publicar en la Store" -ForegroundColor White
-Write-Host ""
+if (Test-Path -LiteralPath $outputDir) {
+    Get-ChildItem -LiteralPath $outputDir -File -Filter "*.msix" |
+        ForEach-Object { Remove-Item -LiteralPath $_.FullName -Force }
+}
+
+Write-Host "Compilando WinTTS $Version para $Runtime..." -ForegroundColor Cyan
+dotnet publish $projectFile `
+    --configuration $Configuration `
+    --runtime $Runtime `
+    --self-contained true `
+    --output $packageDir `
+    -p:PublishSingleFile=false `
+    -p:DebugType=None `
+    -p:DebugSymbols=false
+
+if ($LASTEXITCODE -ne 0) {
+    throw "dotnet publish fallo con el codigo $LASTEXITCODE."
+}
+
+$manifest.Package.Applications.Application.Executable = "WinTTS.exe"
+$manifest.Save((Join-Path $packageDir "AppxManifest.xml"))
+
+$imageSource = Join-Path $projectRoot "Image"
+if (Test-Path -LiteralPath $imageSource) {
+    Copy-Item -LiteralPath $imageSource -Destination $packageDir -Recurse -Force
+}
+
+if (Test-Path -LiteralPath $msixPath) {
+    Remove-Item -LiteralPath $msixPath -Force
+}
+
+& $makeAppx pack /d $packageDir /p $msixPath /o
+if ($LASTEXITCODE -ne 0) {
+    throw "makeappx fallo con el codigo $LASTEXITCODE."
+}
+
+$signed = $false
+if ($CertificatePath) {
+    $certificate = Get-PfxCertificate -FilePath $CertificatePath
+    if ($certificate.Subject -ne [string]$identity.Publisher) {
+        throw "El certificado ($($certificate.Subject)) no coincide con el Publisher del manifiesto ($($identity.Publisher))."
+    }
+
+    $signArguments = @("sign", "/fd", "SHA256", "/f", $CertificatePath)
+    if ($CertificatePassword) {
+        $signArguments += @("/p", $CertificatePassword)
+    }
+    $signArguments += $msixPath
+    & $signTool @signArguments
+    if ($LASTEXITCODE -ne 0) {
+        throw "signtool fallo con el codigo $LASTEXITCODE."
+    }
+    $signed = $true
+}
+
+New-Item -ItemType Directory -Path $validationDir -Force | Out-Null
+& $makeAppx unpack /p $msixPath /d $validationDir /o | Out-Null
+if ($LASTEXITCODE -ne 0) {
+    throw "No se pudo volver a abrir el MSIX generado."
+}
+
+[xml]$packedManifest = Get-Content -LiteralPath (Join-Path $validationDir "AppxManifest.xml") -Raw
+if ([string]$packedManifest.Package.Identity.Version -ne $packageVersion) {
+    throw "Version inesperada dentro del MSIX."
+}
+if (-not (Test-Path -LiteralPath (Join-Path $validationDir "WinTTS.exe"))) {
+    throw "El MSIX no contiene WinTTS.exe."
+}
+
+$hash = (Get-FileHash -LiteralPath $msixPath -Algorithm SHA256).Hash.ToLowerInvariant()
+$sizeMb = [math]::Round((Get-Item -LiteralPath $msixPath).Length / 1MB, 2)
+
+foreach ($directory in @($packageDir, $validationDir)) {
+    if (Test-Path -LiteralPath $directory) {
+        Remove-Item -LiteralPath $directory -Recurse -Force
+    }
+}
+
+Write-Host "MSIX generado y validado: $msixPath" -ForegroundColor Green
+Write-Host "Tamano: $sizeMb MB"
+Write-Host "SHA256: $hash"
+Write-Host "Firmado: $signed"
+
+[pscustomobject]@{
+    Path = $msixPath
+    Version = $packageVersion
+    Publisher = [string]$packedManifest.Package.Identity.Publisher
+    Signed = $signed
+    Sha256 = $hash
+}
