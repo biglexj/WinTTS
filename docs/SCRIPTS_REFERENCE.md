@@ -1,5 +1,16 @@
 # Referencia Completa de Scripts de WinTTS
 
+## build-release.ps1
+
+Flujo integral para una versión pública. Lee la versión de `WinTTS.csproj`, sincroniza el manifiesto, ejecuta build y pruebas, crea el EXE self-contained, calcula SHA-256, actualiza y valida WinGet, y finalmente publica commit, tag y GitHub Release.
+
+```powershell
+.\build-release.ps1 -LocalOnly
+.\build-release.ps1 -SkipBuild
+```
+
+`-LocalOnly` omite Git y GitHub. `-SkipBuild` reutiliza exclusivamente `publish/exe/WinTTS.exe`, útil después de un ensayo local exitoso.
+
 ## 📋 Tabla de Contenidos
 
 1. [Introducción](#introducción)

@@ -2,23 +2,33 @@
 
 Plan de trabajo, objetivos y prioridades del proyecto.
 
-## 🔴 Urgente / Importante (Prioridad Alta)
-- [ ] Implementar controles de reproducción avanzados:
-  - [ ] Deslizador independiente para ajustar la velocidad de reproducción.
-  - [ ] Deslizador independiente para ajustar el tono (rango -10 a +10).
-- [ ] Mejorar ciclo de vida del reproductor:
-  - [ ] Integrar pausa y reanudación limpia de la lectura.
+## 🔴 Urgente / Normal (Pendientes Activos)
+
+- Sin pendientes críticos abiertos para el hito `1.0.1`.
 
 ## 🟡 Intermedio (Prioridad Media/Baja)
-- [ ] Incorporar importación de archivos de texto (`.txt` y `.md`) directamente al editor.
-- [ ] Implementar capacidad de guardar o exportar los textos editados.
-- [ ] Implementar exportación de audio sintetizado a archivos locales:
-  - [ ] Soporte para formato WAV (sin pérdidas).
-  - [ ] Soporte para formato MP3 (comprimido).
+
+- [ ] Incorporar importación y guardado de `.txt` y `.md`.
+- [ ] Persistir configuración, archivos recientes y fragmentos omitidos mediante un formato seguro.
+- [ ] Evaluar exportación MP3 según licencia, tamaño y compatibilidad MSIX.
+- [ ] Añadir previsualización del texto procesado y estimación avanzada de duración.
+
+## ⚪ Descartado / En Pausa
+
+- ⏸️ Migración de WPF o uso de TTS en la nube: fuera del alcance; se conserva la ejecución local y privada.
 
 ## 🟢 Completado
-- [x] Primera versión estable de WinTTS (v1.0.0 "Alfajor").
-- [x] Motor de síntesis de texto a voz (TTS) 100% local y offline mediante `System.Speech.Synthesis`.
-- [x] Motor de preprocesamiento para limpieza automática de sintaxis Markdown (negritas, enlaces, títulos y código).
-- [x] Interfaz gráfica de diseño oscuro con acentos turquesa ("Ely VTuber" style) y barra de título personalizada.
-- [x] Selección de voz del sistema en tiempo real ("hot-swap") y ajuste fino de volumen.
+
+- [x] Primera versión estable WinTTS `1.0.0` “Alfajor”.
+- [x] Motor TTS local mediante `System.Speech.Synthesis`.
+- [x] Selección de voces instaladas y ajuste de volumen.
+- [x] Cambio de voz durante la lectura, retomando tras la última palabra procesada y conservando la pausa.
+- [x] Vista Markdown renderizada con modo fuente y resaltado de elementos no narrados.
+- [x] Preprocesamiento Markdown y omisión de emojis cubiertos por pruebas automatizadas.
+- [x] Reproducción, pausa, reanudación y detención mediante estados explícitos.
+- [x] Velocidad, tono, lectura de selección y fragmentos omitidos.
+- [x] Exportación WAV cancelable con la misma configuración de reproducción.
+- [x] Iconos, colores, foco, contraste y estados de controles unificados.
+- [x] WinTTS `1.0.1` compilado, validado y publicado con binario portable y SHA-256.
+- [x] Interfaz oscura inicial con barra de título personalizada.
+- [x] Plan de implementación y reglas documentales normalizadas desde los templates del autor.

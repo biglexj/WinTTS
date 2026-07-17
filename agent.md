@@ -26,22 +26,35 @@ Si necesitas referencias sobre la arquitectura, el lenguaje de diseño, los comp
   - Cualquier script de prueba temporal, simulaciones o pruebas del entorno de desarrollo (como pruebas de generación de archivos o scripts ejecutables) debe crearse dentro de la carpeta `test/` en la raíz.
   - La carpeta `test/` está ignorada en `.gitignore` para evitar que se suban archivos temporales al repositorio de Git.
 
+## Estilo de Comunicación
+
+- La fuente de verdad está en `.agents/rules/communication.md`.
+- Mantener una comunicación científica, metódica y elegante, diferenciando siempre resultados verificados de supuestos.
+
 ## Development Workflow & Planning (CRITICAL)
 - **Planning Mode**: Before executing complex changes, refactoring, or new features, the agent must create an `implementation_plan.md` in the task context or workspace and wait for the user's approval.
 - **Task Tracking**: Once approved, create `task.md` to track progress of task checklists.
 - **Verification**: Always verify code builds, and run unit tests or manual tests to verify code. Use `walkthrough.md` to document changes made.
 
+## Customization Rules (.agents/rules/)
+- **Source of Truth for Agent Behavior**: Las reglas personalizadas deben vivir en `.agents/rules/` como Markdown con frontmatter (por ejemplo, `trigger: always_on`).
+- **Character Limit (CRITICAL)**: Ningún archivo de reglas puede superar 12,000 caracteres.
+- **Rule Compression**: Si una regla se acerca al límite, sintetizarla y mover la explicación extensa a `docs/`.
+- **Agent Hand-off**: Revisar `.agents/rules/` al iniciar tareas y mantener sus reglas concisas y actualizadas.
+
 ## Documentation Maintenance Rules
 The agent must keep documentation clean and updated according to the following guidelines:
 
 ### 1. ROADMAP.md
+- **Orden obligatorio**: Mantener cuatro bloques: pendientes activos, planes intermedios, descartados/en pausa y completados.
 - **Urgente / Importante**: Tareas críticas, corrección de errores, requerimientos indispensables para el hito actual.
 - **Intermedio**: Tareas secundarias, mejoras de rendimiento o funcionalidades opcionales.
+- **Descartado / En pausa**: Conservar propuestas fuera del alcance con su razón para una posible reevaluación.
 - **Completado**: Historial limpio de tareas finalizadas.
 - Mantener descripciones claras, concisas y estructuradas.
 
 ### 2. RELEASE_NOTES.md
-- **Límite de Extensión (CRÍTICO)**: No escribir registros de versión demasiado largos. Para parches pequeños, 1-2 párrafos (promedio de 3 líneas por párrafo) son suficientes. Para lanzamientos mayores, escribir un máximo de 4-5 párrafos. Evitar listas detalladas de archivos.
+- **Extensión proporcional (CRÍTICO)**: Usar 1 párrafo para un hito pequeño, 2 para dos cambios relevantes, 3 habitualmente, 4 para hitos grandes y hasta 5 para lanzamientos mayores. Evitar listas de archivos.
 - **No duplicar versiones**: Si una versión ya está registrada localmente pero aún no se ha hecho push a Git, añadir los nuevos cambios bajo la misma versión activa en lugar de crear una nueva versión de parche.
 - **Límite de Parches (Regla del .9)**: Nunca pasar de una versión de parche `.9` (por ejemplo, de `1.0.9` pasar a `1.1.0` en lugar de `1.0.10`).
 - **Nombres de Dulces**: Cada versión mayor (ej: `2.0.0`) debe nombrarse con un dulce o postre (estilo Android) y estar coordinado en `Package.appxmanifest`, `WinTTS.csproj`, `README.md` y `RELEASE_NOTES.md`.

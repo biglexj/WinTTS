@@ -1,8 +1,13 @@
 /bin/
 /obj/
 /publish/
+/release/
 /.vs/
 
 # Carpetas temporales y de pruebas (Reglas del Agente)
 /test/
 /scratch/
+
+# Certificados privados: los archivos históricos requieren rotación separada,
+# pero ningún certificado nuevo debe entrar al repositorio.
+*.pfx

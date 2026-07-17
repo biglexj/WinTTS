@@ -2,6 +2,20 @@
 
 Esta guía explica cómo generar diferentes tipos de paquetes para distribuir WinTTS.
 
+## Publicación automatizada recomendada
+
+El flujo principal sincroniza la versión, compila, ejecuta pruebas, genera el EXE portable y su SHA-256, valida los manifiestos WinGet y, fuera del modo local, crea el commit, tag y GitHub Release:
+
+```powershell
+# Ensayo completo sin modificar Git ni GitHub
+.\build-release.ps1 -Version 1.0.1 -LocalOnly
+
+# Publicación del binario ya validado localmente
+.\build-release.ps1 -Version 1.0.1 -SkipBuild
+```
+
+El segundo comando requiere autenticación activa de Git y GitHub CLI. Los certificados `.pfx` nunca se adjuntan al release.
+
 ## 📋 Tabla de Contenidos
 
 1. [Ejecutable Portable (EXE)](#ejecutable-portable-exe)

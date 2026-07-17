@@ -7,7 +7,7 @@
   <Identity
     Name="biglexj.WinTTS"
     Publisher="CN=C90A4D85-591F-46E3-AA49-75B551A23CED"
-    Version="1.0.0.0" />
+    Version="1.0.1.0" />
 
   <Properties>
     <DisplayName>WinTTS</DisplayName>

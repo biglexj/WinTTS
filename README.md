@@ -2,17 +2,19 @@
 
 WinTTS es una aplicación de escritorio nativa para Windows (WPF/C#) diseñada para la síntesis de texto a voz (TTS) de forma 100% local y privada. Su principal característica es la capacidad de limpiar automáticamente el formato Markdown (negritas, enlaces, títulos y código) antes de iniciar la lectura, ofreciendo una experiencia fluida y sin distracciones auditivas.
 
-Con un diseño oscuro moderno y elegante con acentos turquesa, la aplicación permite seleccionar dinámicamente entre las voces instaladas en el sistema operativo Windows y ajustar en tiempo real el volumen de la reproducción, todo funcionando de forma offline y garantizando la total privacidad de tus datos.
+Con un diseño oscuro moderno y elegante con acentos turquesa, la aplicación permite seleccionar dinámicamente entre las voces instaladas en Windows, controlar la reproducción, renderizar Markdown y exportar audio WAV, todo funcionando offline y garantizando la privacidad de tus datos.
 
 ---
 
 ## ✨ Características Principales
 
-* **Limpieza de Markdown**: Elimina automáticamente negritas, títulos, enlaces y bloques de código antes de la lectura para evitar que el sintetizador lea caracteres de formato.
+* **Vista Markdown**: Renderiza títulos, listas, citas, énfasis y código; el modo fuente resalta en ámbar lo que no será narrado.
 * **Voz del Sistema**: Utiliza las voces nativas instaladas en tu Windows (100% local y offline).
-* **Hot-Swap de Voces**: Permite cambiar la voz de reproducción en tiempo real mientras la aplicación está leyendo.
+* **Cambio de voz durante la lectura**: Retoma la narración tras la última palabra procesada con la nueva voz.
 * **Interfaz Moderna**: Diseño minimalista oscuro con acentos turquesa ("Ely VTuber" style) para evitar la fatiga visual.
-* **Control de Volumen**: Ajuste preciso del volumen de salida.
+* **Control completo**: Reproducir, pausar, reanudar, detener, ajustar volumen, velocidad y tono.
+* **Selección y omisiones**: Lee únicamente un rango o marca fragmentos que no deben narrarse ni exportarse.
+* **Exportación WAV**: Genera audio local con la misma preparación y configuración de la previsualización.
 
 ---
 
@@ -27,8 +29,8 @@ Con un diseño oscuro moderno y elegante con acentos turquesa, la aplicación pe
 2. Abre la carpeta del proyecto en una terminal.
 3. Ejecuta los siguientes comandos:
    ```bash
-   dotnet build
-   dotnet run
+   dotnet build .\WinTTS.csproj
+   dotnet run --project .\WinTTS.csproj
    ```
 
 ---
@@ -43,10 +45,10 @@ Con un diseño oscuro moderno y elegante con acentos turquesa, la aplicación pe
 ## 📚 Documentación y Empaquetado
 
 ### Guías detalladas
-* **[Guía Completa de Publicación](file:///d:/Proyectos/biglexj/WinTTS/docs/publicar.md)**: Métodos para generar ejecutables portables (EXE) y paquetes de la Microsoft Store (MSIX).
-* **[Guía Completa de MSIX](file:///d:/Proyectos/biglexj/WinTTS/docs/MSIX_GUIDE.md)**: Proceso de empaquetado paso a paso, certificados, firmas y solución de problemas.
-* **[Referencia de Scripts](file:///d:/Proyectos/biglexj/WinTTS/docs/SCRIPTS_REFERENCE.md)**: Información detallada de los scripts de automatización disponibles.
-* **[Guía Rápida de MSIX](file:///d:/Proyectos/biglexj/WinTTS/docs/MSIX_PACKAGING.md)**: Pasos resumidos para el empaquetado.
+* **[Guía Completa de Publicación](docs/PUBLISHING.md)**: Métodos para generar ejecutables portables (EXE) y paquetes de la Microsoft Store (MSIX).
+* **[Guía Completa de MSIX](docs/MSIX_GUIDE.md)**: Proceso de empaquetado paso a paso, certificados, firmas y solución de problemas.
+* **[Referencia de Scripts](docs/SCRIPTS_REFERENCE.md)**: Información detallada de los scripts de automatización disponibles.
+* **[Guía Rápida de MSIX](docs/MSIX_PACKAGING.md)**: Pasos resumidos para el empaquetado.
 
 ### Scripts de Generación de Paquetes
 Puedes generar los instaladores ejecutando estos comandos en PowerShell:
@@ -57,6 +59,10 @@ Puedes generar los instaladores ejecutando estos comandos en PowerShell:
 # Generar y firmar paquete MSIX
 .\scripts\build-msix.ps1
 .\scripts\sign-package.ps1
+
+# Validar y publicar una versión completa en GitHub
+.\build-release.ps1 -LocalOnly
+.\build-release.ps1
 ```
 
 ---

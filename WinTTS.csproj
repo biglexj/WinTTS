@@ -1,4 +1,4 @@
-﻿<Project Sdk="Microsoft.NET.Sdk">
+<Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
     <OutputType>WinExe</OutputType>
@@ -7,11 +7,20 @@
     <ImplicitUsings>enable</ImplicitUsings>
     <UseWPF>true</UseWPF>
     <ApplicationIcon>Icon\app_icon.ico</ApplicationIcon>
+    <Version>1.0.1</Version>
+    <AssemblyVersion>1.0.1.0</AssemblyVersion>
+    <FileVersion>1.0.1.0</FileVersion>
   </PropertyGroup>
 
   <ItemGroup>
     <Resource Include="Icon\app_icon.ico" />
     <PackageReference Include="System.Speech" Version="10.0.2" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Compile Remove="WinTTS.Tests\**\*.cs" />
+    <EmbeddedResource Remove="WinTTS.Tests\**\*" />
+    <None Remove="WinTTS.Tests\**\*" />
   </ItemGroup>
 
 </Project>
