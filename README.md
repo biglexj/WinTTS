@@ -4,6 +4,12 @@ WinTTS es una aplicación de escritorio nativa para Windows (WPF/C#) diseñada p
 
 Con un diseño oscuro moderno y elegante con acentos turquesa, la aplicación permite seleccionar dinámicamente entre las voces instaladas en Windows, controlar la reproducción, renderizar Markdown y exportar audio WAV, todo funcionando offline y garantizando la privacidad de tus datos.
 
+## 📸 Capturas de Pantalla
+
+| Editor vacío | Editor con Markdown |
+| :---: | :---: |
+| ![Editor de narración vacío](screenshots/narration_editor_empty.png) | ![Editor de narración con Markdown](screenshots/narration_editor_markdown.png) |
+
 ---
 
 ## ✨ Características Principales
