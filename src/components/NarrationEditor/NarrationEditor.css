@@ -32,6 +32,28 @@
   font-size: 13px;
   color: var(--text-secondary);
   white-space: nowrap;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.editor-file-name {
+  max-width: 260px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  color: var(--text-primary);
+  font-weight: 500;
+}
+
+.editor-file-dirty {
+  color: #FBBF24;
+}
+
+.toolbar-separator {
+  width: 1px;
+  align-self: stretch;
+  margin: 4px 2px;
+  background: var(--border-color);
 }
 
 .editor-toolbar {

@@ -35,31 +35,41 @@ export interface SkippedRange {
   text: string;
 }
 
+export type PiperQuality = 'x_low' | 'low' | 'medium' | 'high';
+
 export interface PiperCatalogModel {
   id: string;
   name: string;
   language: string;
   locale: string;
   gender: 'Male' | 'Female';
-  quality: 'low' | 'medium' | 'high';
+  quality: PiperQuality;
   sizeMB: number;
   huggingFaceUrl: string;
+  /** Ruta del modelo dentro del repositorio de Hugging Face. */
+  modelPath: string;
 }
 
-export interface AppSettings {
-  piperBinaryPath: string;
-  piperModelsDir: string;
-  enablePiper: boolean;
-  installedPiperModels: string[]; // List of model IDs installed
-  systemVoiceLanguages: string[]; // Idiomas de voces del sistema a mostrar, ej: ['es'] o ['all']
-  sampleRate: number;
-  stripEmojis: boolean;
-  stripCodeBlocks: boolean;
-  defaultSavePrefix: string;
+/** Modelo Piper realmente presente en disco. */
+export interface PiperInstalledModel {
+  id: string;
+  path: string;
+  sizeBytes: number;
 }
+
+/** Base de descarga de los pesos neuronales de Piper. */
+export const PIPER_BASE_URL = 'https://huggingface.co/rhasspy/piper-voices/resolve/main/';
+
+/** URL directa del peso `.onnx` de un modelo del catalogo. */
+export const piperModelUrl = (model: PiperCatalogModel) =>
+  `${PIPER_BASE_URL}${model.modelPath}/${model.id}.onnx`;
+
+/** URL directa de la configuracion `.onnx.json` que accompany al peso. */
+export const piperConfigUrl = (model: PiperCatalogModel) =>
+  `${PIPER_BASE_URL}${model.modelPath}/${model.id}.onnx.json`;
 
 export const PIPER_POPULAR_MODELS: PiperCatalogModel[] = [
-  // --- ESPAÑOL ---
+  // --- ESPANOL ---
   {
     id: 'es_AR-daniela-high',
     name: 'Español Argentina — Daniela',
@@ -67,8 +77,9 @@ export const PIPER_POPULAR_MODELS: PiperCatalogModel[] = [
     locale: 'es-AR',
     gender: 'Female',
     quality: 'high',
-    sizeMB: 114,
+    sizeMB: 108.9,
     huggingFaceUrl: 'https://huggingface.co/rhasspy/piper-voices/tree/main/es/es_AR/daniela/high',
+    modelPath: 'es/es_AR/daniela/high',
   },
   {
     id: 'es_MX-claude-high',
@@ -77,8 +88,9 @@ export const PIPER_POPULAR_MODELS: PiperCatalogModel[] = [
     locale: 'es-MX',
     gender: 'Male',
     quality: 'high',
-    sizeMB: 112,
+    sizeMB: 60.2,
     huggingFaceUrl: 'https://huggingface.co/rhasspy/piper-voices/tree/main/es/es_MX/claude/high',
+    modelPath: 'es/es_MX/claude/high',
   },
   {
     id: 'es_MX-ald-medium',
@@ -87,28 +99,20 @@ export const PIPER_POPULAR_MODELS: PiperCatalogModel[] = [
     locale: 'es-MX',
     gender: 'Male',
     quality: 'medium',
-    sizeMB: 39,
+    sizeMB: 60.3,
     huggingFaceUrl: 'https://huggingface.co/rhasspy/piper-voices/tree/main/es/es_MX/ald/medium',
+    modelPath: 'es/es_MX/ald/medium',
   },
   {
-    id: 'es_ES-carlfm-high',
-    name: 'Español España — Carlfm (Studio)',
+    id: 'es_ES-carlfm-x_low',
+    name: 'Español España — Carlfm (Ligera)',
     language: 'Español',
     locale: 'es-ES',
     gender: 'Male',
-    quality: 'high',
-    sizeMB: 110,
-    huggingFaceUrl: 'https://huggingface.co/rhasspy/piper-voices/tree/main/es/es_ES/carlfm/high',
-  },
-  {
-    id: 'es_ES-carlfm-medium',
-    name: 'Español España — Carlfm',
-    language: 'Español',
-    locale: 'es-ES',
-    gender: 'Male',
-    quality: 'medium',
-    sizeMB: 38,
-    huggingFaceUrl: 'https://huggingface.co/rhasspy/piper-voices/tree/main/es/es_ES/carlfm/medium',
+    quality: 'x_low',
+    sizeMB: 26.8,
+    huggingFaceUrl: 'https://huggingface.co/rhasspy/piper-voices/tree/main/es/es_ES/carlfm/x_low',
+    modelPath: 'es/es_ES/carlfm/x_low',
   },
   {
     id: 'es_ES-davefx-medium',
@@ -117,8 +121,9 @@ export const PIPER_POPULAR_MODELS: PiperCatalogModel[] = [
     locale: 'es-ES',
     gender: 'Male',
     quality: 'medium',
-    sizeMB: 38,
+    sizeMB: 60.3,
     huggingFaceUrl: 'https://huggingface.co/rhasspy/piper-voices/tree/main/es/es_ES/davefx/medium',
+    modelPath: 'es/es_ES/davefx/medium',
   },
   {
     id: 'es_ES-sharvard-medium',
@@ -127,18 +132,20 @@ export const PIPER_POPULAR_MODELS: PiperCatalogModel[] = [
     locale: 'es-ES',
     gender: 'Female',
     quality: 'medium',
-    sizeMB: 42,
+    sizeMB: 73.2,
     huggingFaceUrl: 'https://huggingface.co/rhasspy/piper-voices/tree/main/es/es_ES/sharvard/medium',
+    modelPath: 'es/es_ES/sharvard/medium',
   },
   {
     id: 'es_ES-mls_10246-low',
-    name: 'Español España — MLS 10246 (Ligera)',
+    name: 'Español España — MLS 10246',
     language: 'Español',
     locale: 'es-ES',
     gender: 'Female',
     quality: 'low',
-    sizeMB: 18,
+    sizeMB: 60.2,
     huggingFaceUrl: 'https://huggingface.co/rhasspy/piper-voices/tree/main/es/es_ES/mls_10246/low',
+    modelPath: 'es/es_ES/mls_10246/low',
   },
 
   // --- ENGLISH ---
@@ -149,8 +156,9 @@ export const PIPER_POPULAR_MODELS: PiperCatalogModel[] = [
     locale: 'en-US',
     gender: 'Female',
     quality: 'high',
-    sizeMB: 114,
+    sizeMB: 108.6,
     huggingFaceUrl: 'https://huggingface.co/rhasspy/piper-voices/tree/main/en/en_US/lessac/high',
+    modelPath: 'en/en_US/lessac/high',
   },
   {
     id: 'en_US-lessac-medium',
@@ -159,8 +167,9 @@ export const PIPER_POPULAR_MODELS: PiperCatalogModel[] = [
     locale: 'en-US',
     gender: 'Female',
     quality: 'medium',
-    sizeMB: 40,
+    sizeMB: 60.3,
     huggingFaceUrl: 'https://huggingface.co/rhasspy/piper-voices/tree/main/en/en_US/lessac/medium',
+    modelPath: 'en/en_US/lessac/medium',
   },
   {
     id: 'en_US-ryan-high',
@@ -169,8 +178,9 @@ export const PIPER_POPULAR_MODELS: PiperCatalogModel[] = [
     locale: 'en-US',
     gender: 'Male',
     quality: 'high',
-    sizeMB: 115,
+    sizeMB: 115.2,
     huggingFaceUrl: 'https://huggingface.co/rhasspy/piper-voices/tree/main/en/en_US/ryan/high',
+    modelPath: 'en/en_US/ryan/high',
   },
   {
     id: 'en_US-ryan-medium',
@@ -179,8 +189,9 @@ export const PIPER_POPULAR_MODELS: PiperCatalogModel[] = [
     locale: 'en-US',
     gender: 'Male',
     quality: 'medium',
-    sizeMB: 41,
+    sizeMB: 60.3,
     huggingFaceUrl: 'https://huggingface.co/rhasspy/piper-voices/tree/main/en/en_US/ryan/medium',
+    modelPath: 'en/en_US/ryan/medium',
   },
   {
     id: 'en_US-amy-medium',
@@ -189,8 +200,9 @@ export const PIPER_POPULAR_MODELS: PiperCatalogModel[] = [
     locale: 'en-US',
     gender: 'Female',
     quality: 'medium',
-    sizeMB: 38,
+    sizeMB: 60.3,
     huggingFaceUrl: 'https://huggingface.co/rhasspy/piper-voices/tree/main/en/en_US/amy/medium',
+    modelPath: 'en/en_US/amy/medium',
   },
   {
     id: 'en_US-bryce-medium',
@@ -199,8 +211,9 @@ export const PIPER_POPULAR_MODELS: PiperCatalogModel[] = [
     locale: 'en-US',
     gender: 'Male',
     quality: 'medium',
-    sizeMB: 40,
+    sizeMB: 60.6,
     huggingFaceUrl: 'https://huggingface.co/rhasspy/piper-voices/tree/main/en/en_US/bryce/medium',
+    modelPath: 'en/en_US/bryce/medium',
   },
   {
     id: 'en_GB-alan-medium',
@@ -209,8 +222,9 @@ export const PIPER_POPULAR_MODELS: PiperCatalogModel[] = [
     locale: 'en-GB',
     gender: 'Male',
     quality: 'medium',
-    sizeMB: 38,
+    sizeMB: 60.3,
     huggingFaceUrl: 'https://huggingface.co/rhasspy/piper-voices/tree/main/en/en_GB/alan/medium',
+    modelPath: 'en/en_GB/alan/medium',
   },
   {
     id: 'en_GB-alba-medium',
@@ -219,8 +233,9 @@ export const PIPER_POPULAR_MODELS: PiperCatalogModel[] = [
     locale: 'en-GB',
     gender: 'Female',
     quality: 'medium',
-    sizeMB: 40,
+    sizeMB: 60.3,
     huggingFaceUrl: 'https://huggingface.co/rhasspy/piper-voices/tree/main/en/en_GB/alba/medium',
+    modelPath: 'en/en_GB/alba/medium',
   },
 
   // --- OTROS IDIOMAS ---
@@ -231,8 +246,9 @@ export const PIPER_POPULAR_MODELS: PiperCatalogModel[] = [
     locale: 'fr-FR',
     gender: 'Female',
     quality: 'medium',
-    sizeMB: 43,
+    sizeMB: 60.3,
     huggingFaceUrl: 'https://huggingface.co/rhasspy/piper-voices/tree/main/fr/fr_FR/siwis/medium',
+    modelPath: 'fr/fr_FR/siwis/medium',
   },
   {
     id: 'de_DE-thorsten-high',
@@ -241,8 +257,9 @@ export const PIPER_POPULAR_MODELS: PiperCatalogModel[] = [
     locale: 'de-DE',
     gender: 'Male',
     quality: 'high',
-    sizeMB: 110,
+    sizeMB: 108.6,
     huggingFaceUrl: 'https://huggingface.co/rhasspy/piper-voices/tree/main/de/de_DE/thorsten/high',
+    modelPath: 'de/de_DE/thorsten/high',
   },
   {
     id: 'pt_BR-faber-medium',
@@ -251,32 +268,40 @@ export const PIPER_POPULAR_MODELS: PiperCatalogModel[] = [
     locale: 'pt-BR',
     gender: 'Male',
     quality: 'medium',
-    sizeMB: 38,
+    sizeMB: 60.3,
     huggingFaceUrl: 'https://huggingface.co/rhasspy/piper-voices/tree/main/pt/pt_BR/faber/medium',
+    modelPath: 'pt/pt_BR/faber/medium',
   },
   {
-    id: 'it_IT-riccardo-medium',
-    name: 'Italiano — Riccardo',
+    id: 'it_IT-riccardo-x_low',
+    name: 'Italiano — Riccardo (Ligera)',
     language: 'Italiano',
     locale: 'it-IT',
     gender: 'Male',
-    quality: 'medium',
-    sizeMB: 39,
-    huggingFaceUrl: 'https://huggingface.co/rhasspy/piper-voices/tree/main/it/it_IT/riccardo/medium',
+    quality: 'x_low',
+    sizeMB: 26.8,
+    huggingFaceUrl: 'https://huggingface.co/rhasspy/piper-voices/tree/main/it/it_IT/riccardo/x_low',
+    modelPath: 'it/it_IT/riccardo/x_low',
   },
 ];
 
+export interface AppSettings {
+  piperBinaryPath: string;
+  piperModelsDir: string;
+  enablePiper: boolean;
+  installedPiperModels: string[]; // Modelos marcados como instalados (se cruzan con el disco)
+  systemVoiceLanguages: string[]; // Idiomas de voces del sistema a mostrar, ej: ['es'] o ['all']
+  sampleRate: number;
+  stripEmojis: boolean;
+  stripCodeBlocks: boolean;
+  defaultSavePrefix: string;
+}
+
 export const DEFAULT_APP_SETTINGS: AppSettings = {
   piperBinaryPath: '',
-  piperModelsDir: '%APPDATA%\\WinTTS\\piper\\models',
+  piperModelsDir: '',
   enablePiper: true,
-  installedPiperModels: [
-    'es_AR-daniela-high',
-    'es_MX-claude-high',
-    'es_ES-davefx-medium',
-    'es_ES-sharvard-medium',
-    'es_MX-ald-medium',
-  ],
+  installedPiperModels: [],
   systemVoiceLanguages: ['es'],
   sampleRate: 22050,
   stripEmojis: true,

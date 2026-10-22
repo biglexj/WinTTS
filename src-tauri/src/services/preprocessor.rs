@@ -83,6 +83,11 @@ pub fn prepare_text(markdown: &str) -> String {
     result.trim().to_string()
 }
 
+/// Construye el SSML para la sintesis de Windows.
+///
+/// El tono 0 **no** debe generar un elemento `prosody`: `pitch="0st"` no es un
+/// valor valido de SSML (los absolutos son con nombre) y hacia fallar la
+/// exportacion completa con un HRESULT de Windows.
 pub fn build_ssml(text: &str, culture: &str, pitch: i32) -> String {
     let safe_text = escape_xml(text);
     let safe_culture = if culture.trim().is_empty() {
@@ -91,15 +96,21 @@ pub fn build_ssml(text: &str, culture: &str, pitch: i32) -> String {
         culture.trim()
     };
     let safe_pitch = pitch.clamp(-10, 10);
-    let pitch_val = if safe_pitch > 0 {
-        format!("+{}st", safe_pitch)
+
+    let body = if safe_pitch == 0 {
+        safe_text
     } else {
-        format!("{}st", safe_pitch)
+        let pitch_val = if safe_pitch > 0 {
+            format!("+{}st", safe_pitch)
+        } else {
+            format!("{}st", safe_pitch)
+        };
+        format!(r#"<prosody pitch="{}">{}</prosody>"#, pitch_val, safe_text)
     };
 
     format!(
-        r#"<speak version="1.0" xmlns="http://www.w3.org/2001/10/synthesis" xml:lang="{}"><prosody pitch="{}">{}</prosody></speak>"#,
-        safe_culture, pitch_val, safe_text
+        r#"<speak version="1.0" xmlns="http://www.w3.org/2001/10/synthesis" xml:lang="{}">{}</speak>"#,
+        safe_culture, body
     )
 }
 
@@ -125,5 +136,37 @@ mod tests {
         assert!(cleaned.contains("enlace"));
         assert!(!cleaned.contains("let x = 10;"));
         assert!(!cleaned.contains("```"));
+    }
+
+    #[test]
+    fn build_ssml_omits_pitch_when_zero() {
+        // `pitch="0st"` es un valor de SSML invalido y hacia fallar la
+        // exportacion de audio con el tono por defecto.
+        let ssml = build_ssml("Hola mundo", "es-PE", 0);
+        assert!(!ssml.contains("prosody"), "tono 0 no debe generar prosody: {}", ssml);
+        assert!(ssml.contains(r#"xml:lang="es-PE""#));
+        assert!(ssml.contains("Hola mundo"));
+    }
+
+    #[test]
+    fn build_ssml_uses_relative_pitch() {
+        assert!(build_ssml("Hola", "es-PE", 5).contains(r#"pitch="+5st""#));
+        assert!(build_ssml("Hola", "es-PE", -3).contains(r#"pitch="-3st""#));
+        assert!(build_ssml("Hola", "es-PE", 5).contains("prosody"));
+    }
+
+    #[test]
+    fn build_ssml_clamps_pitch_and_defaults_culture() {
+        assert!(build_ssml("Hola", "es-PE", 99).contains(r#"pitch="+10st""#));
+        assert!(build_ssml("Hola", "es-PE", -99).contains(r#"pitch="-10st""#));
+        assert!(build_ssml("Hola", "  ", 0).contains(r#"xml:lang="es-PE""#));
+    }
+
+    #[test]
+    fn build_ssml_escapes_xml() {
+        let ssml = build_ssml("Tom & <Jerry>", "es-ES", 0);
+        assert!(ssml.contains("&amp;"));
+        assert!(ssml.contains("&lt;Jerry&gt;"));
+        assert!(ssml.contains(r#"xml:lang="es-ES""#));
     }
 }

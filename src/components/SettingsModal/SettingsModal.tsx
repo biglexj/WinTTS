@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import type { AppSettings, SystemVoice } from '../../types';
+import type { PiperController } from '../../hooks/usePiper';
 import { Settings, X, Brain, Mic, Volume2, FileCode, Check } from 'lucide-react';
 import { PiperTab } from './PiperTab';
 import { SystemVoicesTab } from './SystemVoicesTab';
@@ -13,6 +14,7 @@ interface SettingsModalProps {
   settings: AppSettings;
   onSaveSettings: (newSettings: AppSettings) => void;
   availableVoices?: SystemVoice[];
+  piper: PiperController;
 }
 
 export const SettingsModal: React.FC<SettingsModalProps> = ({
@@ -21,6 +23,7 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
   settings,
   onSaveSettings,
   availableVoices = [],
+  piper,
 }) => {
   const [formState, setFormState] = useState<AppSettings>(settings);
   const [activeTab, setActiveTab] = useState<'piper' | 'system' | 'audio' | 'markdown'>('piper');
@@ -113,6 +116,7 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
               formState={formState}
               setFormState={setFormState}
               onSaveSettings={onSaveSettings}
+              piper={piper}
             />
           )}
 

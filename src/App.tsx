@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import { TitleBar } from './components/TitleBar/TitleBar';
 import { SettingsSidebar } from './components/SettingsSidebar/SettingsSidebar';
 import { NarrationEditor } from './components/NarrationEditor/NarrationEditor';
@@ -9,6 +9,7 @@ import { AboutModal } from './components/AboutModal/AboutModal';
 import { useSpeech } from './hooks/useSpeech';
 import { useDocument } from './hooks/useDocument';
 import { useFileDrop } from './hooks/useFileDrop';
+import { usePiper } from './hooks/usePiper';
 import { tauriBridge } from './services/tauriBridge';
 import type { AppSettings, SpeechSettings, SystemVoice } from './types';
 import './styles/global.css';
@@ -19,13 +20,10 @@ export const App: React.FC = () => {
   const [isAboutOpen, setIsAboutOpen] = useState(false);
 
   const [voices, setVoices] = useState<SystemVoice[]>([]);
-  const [settings, setSettings] = useState<SpeechSettings>({
-    voiceName: null,
-    volume: 100,
-    rate: 0,
-    pitch: 0,
-  });
+  const [settings, setSettings] = useState<SpeechSettings>(() => tauriBridge.loadSpeechSettings());
   const [isExporting, setIsExporting] = useState(false);
+
+  const piper = usePiper(appSettings);
 
   const {
     playbackState,
@@ -36,7 +34,8 @@ export const App: React.FC = () => {
     pause,
     resume,
     stop,
-  } = useSpeech();
+    synthesizeWithPiper,
+  } = useSpeech(piper.runtime);
 
   const {
     markdown,
@@ -48,47 +47,100 @@ export const App: React.FC = () => {
     clearSkips,
     getReadableText,
     getReadableSelection,
+    loadDocument,
+    openDocument,
+    saveDocument,
+    saveDocumentAs,
+    filePath,
+    fileName,
+    isDirty,
     stats,
   } = useDocument();
 
-  // Load available system and neural voices on startup and when Piper is toggled
-  const loadVoices = useCallback(async (enablePiper: boolean, installedModels: string[]) => {
-    try {
-      const list = await tauriBridge.getVoices(enablePiper, installedModels);
-      setVoices(list);
-      if (list.length > 0) {
-        setSettings((prev) => ({
-          ...prev,
-          voiceName: prev.voiceName && list.some((v) => v.name === prev.voiceName) ? prev.voiceName : list[0].name,
-        }));
-      } else {
-        setStatusText('No se encontraron voces habilitadas en el sistema.');
+  const installedPiperIds = useMemo(() => piper.installed.map((m) => m.id), [piper.installed]);
+  const installedPiperKey = installedPiperIds.join('|');
+
+  // Load available system and neural voices on startup and when Piper changes
+  const loadVoices = useCallback(
+    async (enablePiper: boolean, installedModels: string[]) => {
+      try {
+        const list = await tauriBridge.getVoices(enablePiper, installedModels);
+        setVoices(list);
+        if (list.length > 0) {
+          setSettings((prev) => ({
+            ...prev,
+            voiceName:
+              prev.voiceName && list.some((v) => v.name === prev.voiceName)
+                ? prev.voiceName
+                : list[0].name,
+          }));
+        } else {
+          setStatusText('No se encontraron voces habilitadas en el sistema.');
+        }
+      } catch (err) {
+        setStatusText(`Error al cargar voces: ${String(err)}`);
       }
-    } catch (err) {
-      setStatusText(`Error al cargar voces: ${String(err)}`);
-    }
-  }, [setStatusText]);
+    },
+    [setStatusText]
+  );
 
   useEffect(() => {
-    loadVoices(appSettings.enablePiper, appSettings.installedPiperModels);
-  }, [loadVoices, appSettings.enablePiper, appSettings.installedPiperModels]);
+    loadVoices(appSettings.enablePiper, installedPiperIds);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [loadVoices, appSettings.enablePiper, installedPiperKey]);
+
+  // La lista de modelos instalados en disco es la fuente de verdad.
+  useEffect(() => {
+    setAppSettings((prev) => {
+      if (
+        prev.installedPiperModels.length === installedPiperIds.length &&
+        prev.installedPiperModels.every((id, index) => id === installedPiperIds[index])
+      ) {
+        return prev;
+      }
+      return { ...prev, installedPiperModels: installedPiperIds };
+    });
+  }, [installedPiperKey, installedPiperIds]);
+
+  useEffect(() => {
+    tauriBridge.saveAppSettings(appSettings);
+  }, [appSettings]);
+
+  // Si la voz seleccionada desaparece (por ejemplo, se desinstala su modelo),
+  // se avisa en lugar de cambiar de motor en silencio.
+  useEffect(() => {
+    if (!settings.voiceName || voices.length === 0) return;
+    if (!voices.some((v) => v.name === settings.voiceName)) {
+      setStatusText(
+        `La voz '${settings.voiceName}' ya no está disponible en este equipo. Se usará la primera voz habilitada.`
+      );
+    }
+  }, [voices, settings.voiceName, setStatusText]);
+
+  // Persistencia de la configuracion de voz.
+  useEffect(() => {
+    tauriBridge.saveSpeechSettings(settings);
+  }, [settings]);
+
+  const selectedVoice = useMemo(
+    () => voices.find((v) => v.name === settings.voiceName),
+    [voices, settings.voiceName]
+  );
 
   // Handle Save Settings from Modal
   const handleSaveAppSettings = (newSettings: AppSettings) => {
     setAppSettings(newSettings);
     tauriBridge.saveAppSettings(newSettings);
-    loadVoices(newSettings.enablePiper, newSettings.installedPiperModels);
     setStatusText('Configuración actualizada correctamente.');
   };
 
   // Drag & Drop Handler
   const handleFileLoaded = useCallback(
     (content: string, filename: string) => {
-      setMarkdown(content);
-      clearSkips();
-      setStatusText(`Archivo cargado: ${filename}`);
+      loadDocument(content, null, filename);
+      setStatusText(`Archivo cargado: ${filename} (aún sin guardar en disco)`);
     },
-    [setMarkdown, clearSkips, setStatusText]
+    [loadDocument, setStatusText]
   );
 
   const handleFileError = useCallback(
@@ -111,9 +163,9 @@ export const App: React.FC = () => {
       resume();
     } else {
       const readable = getReadableText();
-      speak(readable, settings, 'Leyendo documento');
+      speak(readable, settings, 'Leyendo documento', selectedVoice);
     }
-  }, [playbackState, pause, resume, speak, getReadableText, settings]);
+  }, [playbackState, pause, resume, speak, getReadableText, settings, selectedVoice]);
 
   // Read Selection Only
   const handleReadSelection = useCallback(() => {
@@ -122,8 +174,8 @@ export const App: React.FC = () => {
       setStatusText('Selecciona primero el fragmento que deseas leer.');
       return;
     }
-    speak(text, settings, 'Leyendo selección');
-  }, [getReadableSelection, speak, settings, setStatusText]);
+    speak(text, settings, 'Leyendo selección', selectedVoice);
+  }, [getReadableSelection, speak, settings, selectedVoice, setStatusText]);
 
   // Mark Selection as Skipped
   const handleSkipSelection = useCallback(() => {
@@ -139,9 +191,7 @@ export const App: React.FC = () => {
   const handleIncludeSelection = useCallback(() => {
     const success = includeSelection();
     setStatusText(
-      success
-        ? 'La selección volverá a incluirse.'
-        : 'Selecciona primero el fragmento que deseas incluir.'
+      success ? 'La selección volverá a incluirse.' : 'Selecciona primero el fragmento que deseas incluir.'
     );
   }, [includeSelection, setStatusText]);
 
@@ -150,6 +200,22 @@ export const App: React.FC = () => {
     clearSkips();
     setStatusText('Se eliminaron todas las omisiones.');
   }, [clearSkips, setStatusText]);
+
+  // Open / Save
+  const handleOpenDocument = useCallback(async () => {
+    const opened = await openDocument();
+    setStatusText(opened ? 'Documento abierto.' : 'No se abrió ningún documento.');
+  }, [openDocument, setStatusText]);
+
+  const handleSaveDocument = useCallback(async () => {
+    const saved = await saveDocument();
+    setStatusText(saved ? 'Documento guardado.' : 'No se pudo guardar el documento.');
+  }, [saveDocument, setStatusText]);
+
+  const handleSaveDocumentAs = useCallback(async () => {
+    const saved = await saveDocumentAs();
+    setStatusText(saved ? 'Documento guardado.' : 'No se pudo guardar el documento.');
+  }, [saveDocumentAs, setStatusText]);
 
   // Export to WAV / MP3
   const handleExportAudio = useCallback(
@@ -167,7 +233,15 @@ export const App: React.FC = () => {
         setIsExporting(true);
         setStatusText(`Generando audio ${format.toUpperCase()}…`);
 
-        await tauriBridge.exportAudio(text, savePath, settings, format);
+        if (selectedVoice?.provider === 'piper') {
+          // El motor neural ya produce un WAV: se reutiliza para la entrega.
+          const cleanText = await tauriBridge.preprocessText(text);
+          const wavPath = await synthesizeWithPiper(cleanText, settings, selectedVoice);
+          await tauriBridge.exportAudioFile(wavPath, savePath, format);
+        } else {
+          await tauriBridge.exportAudio(text, savePath, settings, format);
+        }
+
         setStatusText(`Audio ${format.toUpperCase()} guardado exitosamente.`);
       } catch (err) {
         setStatusText(`Error al exportar audio: ${String(err)}`);
@@ -175,13 +249,25 @@ export const App: React.FC = () => {
         setIsExporting(false);
       }
     },
-    [getReadableText, settings, setStatusText, appSettings.defaultSavePrefix]
+    [getReadableText, settings, setStatusText, appSettings.defaultSavePrefix, selectedVoice, synthesizeWithPiper]
   );
 
   // Global Keyboard Shortcuts
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
-      if (e.key === 'Enter' && e.ctrlKey) {
+      const ctrl = e.ctrlKey || e.metaKey;
+
+      if (ctrl && e.key.toLowerCase() === 's') {
+        e.preventDefault();
+        if (e.shiftKey) {
+          void handleSaveDocumentAs();
+        } else {
+          void handleSaveDocument();
+        }
+      } else if (ctrl && e.key.toLowerCase() === 'o') {
+        e.preventDefault();
+        void handleOpenDocument();
+      } else if (e.key === 'Enter' && e.ctrlKey) {
         e.preventDefault();
         handlePlayPause();
       } else if (e.key === 'Escape') {
@@ -192,7 +278,7 @@ export const App: React.FC = () => {
 
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [handlePlayPause, stop]);
+  }, [handlePlayPause, stop, handleSaveDocument, handleSaveDocumentAs, handleOpenDocument]);
 
   return (
     <div className="app-container">
@@ -204,6 +290,7 @@ export const App: React.FC = () => {
         settings={appSettings}
         onSaveSettings={handleSaveAppSettings}
         availableVoices={voices}
+        piper={piper}
       />
 
       <AboutModal
@@ -228,6 +315,7 @@ export const App: React.FC = () => {
           isExporting={isExporting}
           enablePiper={appSettings.enablePiper}
           systemVoiceLanguages={appSettings.systemVoiceLanguages}
+          piperEngineReady={piper.engineReady}
         />
 
         <NarrationEditor
@@ -240,6 +328,12 @@ export const App: React.FC = () => {
           onSkipSelection={handleSkipSelection}
           onIncludeSelection={handleIncludeSelection}
           onClearSkips={handleClearSkips}
+          fileName={fileName}
+          filePath={filePath}
+          isDirty={isDirty}
+          onOpenDocument={handleOpenDocument}
+          onSaveDocument={handleSaveDocument}
+          onSaveDocumentAs={handleSaveDocumentAs}
         />
       </main>
 

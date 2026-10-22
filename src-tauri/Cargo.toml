@@ -1,6 +1,6 @@
 [package]
 name = "wintts"
-version = "2.0.0"
+version = "2.1.0"
 description = "WinTTS — Local Speech & Neural Reader"
 authors = ["biglexj"]
 edition = "2021"
@@ -13,7 +13,7 @@ crate-type = ["staticlib", "rlib"]
 tauri-build = { version = "2.0.5", features = [] }
 
 [dependencies]
-tauri = { version = "2.2.5", features = [] }
+tauri = { version = "2.2.5", features = ["protocol-asset"] }
 tauri-plugin-opener = "2"
 tauri-plugin-dialog = "2"
 tauri-plugin-fs = "2"
@@ -23,6 +23,8 @@ serde_json = "1.0"
 regex = "1.10"
 hound = "3.5"
 tokio = { version = "1", features = ["full"] }
+reqwest = { version = "0.12", default-features = false, features = ["rustls-tls", "stream"] }
+futures-util = "0.3"
 
 [target.'cfg(windows)'.dependencies]
 windows = { version = "0.58", features = [
@@ -34,3 +36,16 @@ windows = { version = "0.58", features = [
     "Foundation",
     "Foundation_Collections"
 ] }
+
+# En el toolchain `stable-x86_64-pc-windows-gnullvm` (el unico que enlaza en esta
+# maquina, porque el de MSVC no tiene `link.exe`) la generacion de informacion de
+# depuracion desborda la pila del hilo principal de rustc al compilar crates
+# grandes como `windows` o `icu_properties`:
+#   error: process didn't exit successfully (exit code: 0xc0000409, STATUS_STACK_BUFFER_OVERRUN)
+# Sin informacion de depuracion la compilacion es estable. El perfil de release
+# ya venia sin ella.
+[profile.dev]
+debug = 0
+
+[profile.dev.package."*"]
+debug = 0

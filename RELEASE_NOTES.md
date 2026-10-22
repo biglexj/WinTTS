@@ -7,6 +7,52 @@
 > - Se utiliza SemVer estándar (`MAJOR.MINOR.PATCH`) sin límites artificiales por dígito.
 > - Se incrementa `MAJOR` en hitos de transformación arquitectónica integral con nombre de dulce.
 
+## [2.1.0] — 2026-10-22 — “Nugget Update”
+
+### Resumen
+
+Cierra las promesas que el catalogo de voces neuronales dejaba abiertas y convierte el editor en una
+herramienta de trabajo: los documentos se abren, se guardan y Piper deja de ser decorativo para ser un
+motor real.
+
+### Añadido
+
+* **Guardar, Abrir y Guardar como** (`Ctrl+S`, `Ctrl+O`, `Ctrl+Shift+S`). El comando `save_text_file`
+  ya existia en el backend pero ningun codigo del frontend lo invocaba: las ediciones se perdian al
+  cerrar la aplicacion.
+* **Borrador persistente entre sesiones**: el contenido en edicion se restaura al reabrir WinTTS,
+  marcando si hay cambios pendientes de escribir en disco.
+* **Motor Piper funcional**: descarga real de los pesos `.onnx` desde Hugging Face con barra de
+  progreso, verificacion de lo que hay realmente en disco, sintesis local con `piper.exe` y
+  reproduccion del WAV generado. La velocidad se controla con `length_scale`.
+* **Estado honesto del motor**: si falta `piper.exe`, la interfaz lo dice (pildora “SIN MOTOR” y aviso
+  en la barra lateral) y la aplicacion **no** cambia de voz en silencio.
+* **Persistencia de la configuracion de voz**: voz, volumen, velocidad y tono se guardan entre sesiones.
+
+### Corregido
+
+* **La exportacion WAV fallaba por defecto.** `build_ssml` generaba `pitch="0st"`, que no es un valor
+  valido de SSML (los valores absolutos van con nombre), y la sintetizacion de Windows devolvia el
+  HRESULT `0x80131537`. El tono 0 ya no genera elemento `prosody`.
+* **El idioma del audio exportado seguia a la voz real.** El SSML se construia siempre con `es-PE`,
+  de modo que una voz en ingles se exportaba con fonetica espanola.
+* **Las omisiones se descuadraban al editar.** Los fragmentos omitidos se guardan como offsets
+  absolutos; al escribir por encima de ellos apuntaban a otro texto. Ahora se reajustan con el punto
+  exacto de la edicion.
+* **El catalogo de Piper no coincidia con el repositorio real**: tres entradas (`es_ES-carlfm-high`,
+  `es_ES-carlfm-medium`, `it_IT-riccardo-medium`) no existen, y todos los tamanos de archivo estaban
+  equivocados. El catalogo se contrasto contra la API de Hugging Face y se corrigio.
+* **MP3 en plataformas sin Media Foundation**: se escribia un WAV dentro de un archivo `.mp3`. Ahora se
+  informa con claridad de que la exportacion a MP3 solo esta disponible en Windows.
+* **Los archivos de texto no UTF-8** ya no impiden abrirlos: se decodifican de forma tolerante.
+
+### Verificacion
+
+* 10 pruebas unitarias en Rust (antes 1), incluyendo el ciclo completo de Piper con un ejecutable
+  simulado y la descarga real de un peso desde Hugging Face.
+* `tsc && vite build` sin errores; `cargo test --lib` en verde.
+* Flujo de guardado verificado sobre la aplicacion en ejecucion (escritura y relectura reales).
+
 ## [2.0.0] — 2026-08-31 — “Nougat Update”
 
 ### Resumen

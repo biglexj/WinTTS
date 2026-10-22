@@ -1,6 +1,6 @@
 import React, { useRef, useState, useCallback, useEffect } from 'react';
 import type { DocumentStats, SkippedRange } from '../../types';
-import { Volume2, EyeOff, RotateCcw, Trash2, Code2, Eye } from 'lucide-react';
+import { Volume2, EyeOff, RotateCcw, Trash2, Code2, Eye, FolderOpen, Save } from 'lucide-react';
 import './NarrationEditor.css';
 
 interface NarrationEditorProps {
@@ -13,6 +13,12 @@ interface NarrationEditorProps {
   onSkipSelection: () => void;
   onIncludeSelection: () => void;
   onClearSkips: () => void;
+  fileName: string;
+  filePath: string | null;
+  isDirty: boolean;
+  onOpenDocument: () => void;
+  onSaveDocument: () => void;
+  onSaveDocumentAs: () => void;
 }
 
 function parseInlineMarkdown(text: string): React.ReactNode[] {
@@ -145,6 +151,12 @@ export const NarrationEditor: React.FC<NarrationEditorProps> = ({
   onSkipSelection,
   onIncludeSelection,
   onClearSkips,
+  fileName,
+  filePath,
+  isDirty,
+  onOpenDocument,
+  onSaveDocument,
+  onSaveDocumentAs,
 }) => {
   const [isPreview, setIsPreview] = useState(true);
   const textareaRef = useRef<HTMLTextAreaElement | null>(null);
@@ -285,12 +297,53 @@ export const NarrationEditor: React.FC<NarrationEditorProps> = ({
           <p className="editor-subtitle">Selecciona texto para leerlo o marcarlo como omitido.</p>
         </div>
         <div className="editor-stats">
-          {stats.word_count} palabras · ~{stats.estimated_minutes} min
+          <span
+            className={`editor-file-name ${isDirty ? 'editor-file-dirty' : ''}`}
+            title={filePath ?? 'Documento sin guardar en disco'}
+          >
+            {fileName || 'Documento sin título'}
+            {isDirty ? ' •' : ''}
+          </span>
+          <span>
+            {stats.word_count} palabras · ~{stats.estimated_minutes} min
+          </span>
         </div>
       </div>
 
       {/* Toolbar */}
       <div className="editor-toolbar">
+        <button
+          className="btn-base toolbar-btn"
+          onMouseDown={(e) => e.preventDefault()}
+          onClick={onOpenDocument}
+          title="Abrir un documento .md o .txt (Ctrl+O)"
+        >
+          <FolderOpen size={15} />
+          <span>Abrir</span>
+        </button>
+
+        <button
+          className="btn-base toolbar-btn"
+          onMouseDown={(e) => e.preventDefault()}
+          onClick={onSaveDocument}
+          title="Guardar el documento (Ctrl+S)"
+        >
+          <Save size={15} />
+          <span>Guardar</span>
+        </button>
+
+        <button
+          className="btn-base toolbar-btn"
+          onMouseDown={(e) => e.preventDefault()}
+          onClick={onSaveDocumentAs}
+          title="Guardar con otro nombre (Ctrl+Shift+S)"
+        >
+          <Save size={15} />
+          <span>Guardar como</span>
+        </button>
+
+        <span className="toolbar-separator" />
+
         <button
           className="btn-base toolbar-btn"
           onMouseDown={(e) => e.preventDefault()}

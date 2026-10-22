@@ -9,8 +9,11 @@ pub fn read_text_file(file_path: String) -> Result<FileImportResult, String> {
         return Err(format!("El archivo no existe: {}", file_path));
     }
 
-    let content = fs::read_to_string(path)
+    // Se leen bytes y se decodifican de forma tolerante: un documento guardado
+    // en Latin-1 no debe impedir abrirlo.
+    let bytes = fs::read(path)
         .map_err(|e| format!("Error al leer el archivo '{}': {}", file_path, e))?;
+    let content = String::from_utf8_lossy(&bytes).to_string();
 
     let filename = path
         .file_name()
@@ -30,6 +33,13 @@ pub fn read_text_file(file_path: String) -> Result<FileImportResult, String> {
 
 #[tauri::command]
 pub fn save_text_file(file_path: String, content: String) -> Result<(), String> {
+    if let Some(parent) = Path::new(&file_path).parent() {
+        if !parent.as_os_str().is_empty() && !parent.exists() {
+            fs::create_dir_all(parent)
+                .map_err(|e| format!("No se pudo crear la carpeta '{}': {}", parent.display(), e))?;
+        }
+    }
+
     fs::write(&file_path, content)
         .map_err(|e| format!("Error al guardar el archivo '{}': {}", file_path, e))
 }

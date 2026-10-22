@@ -32,3 +32,11 @@ pub struct DocumentStats {
     pub char_count: usize,
     pub estimated_minutes: usize,
 }
+
+/// Modelo Piper realmente presente en disco.
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct PiperModelFile {
+    pub id: String,
+    pub path: String,
+    pub size_bytes: u64,
+}

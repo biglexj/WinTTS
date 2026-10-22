@@ -3,6 +3,8 @@ use crate::services::preprocessor::{build_ssml, prepare_text};
 use std::fs::File;
 use std::io::Write;
 
+const DEFAULT_CULTURE: &str = "es-PE";
+
 pub fn get_system_voices() -> Vec<SystemVoice> {
     let mut voices = Vec::new();
 
@@ -42,7 +44,7 @@ pub fn get_system_voices() -> Vec<SystemVoice> {
         voices.push(SystemVoice {
             id: "system-default".to_string(),
             name: "Voz predeterminada del sistema".to_string(),
-            culture: "es-ES".to_string(),
+            culture: DEFAULT_CULTURE.to_string(),
             gender: "Neutral".to_string(),
             provider: "system".to_string(),
         });
@@ -51,6 +53,30 @@ pub fn get_system_voices() -> Vec<SystemVoice> {
     voices
 }
 
+/// Resuelve el idioma de la voz seleccionada.
+///
+/// Antes el SSML se generaba siempre con `es-PE`, lo que hacia que una voz en
+/// ingles se exportara con fonetica espanola. Ahora se usa la cultura real de
+/// la voz elegida.
+pub fn resolve_culture(voice_name: Option<&str>) -> String {
+    let Some(name) = voice_name else {
+        return DEFAULT_CULTURE.to_string();
+    };
+
+    get_system_voices()
+        .into_iter()
+        .find(|v| v.name.eq_ignore_ascii_case(name.trim()))
+        .map(|v| v.culture)
+        .filter(|c| !c.trim().is_empty())
+        .unwrap_or_else(|| DEFAULT_CULTURE.to_string())
+}
+
+/// Exporta texto a audio.
+///
+/// `wav` se genera siempre; `mp3` transcodifica el WAV temporal con Windows
+/// Media Foundation. En plataformas sin Media Foundation el MP3 no es
+/// soportado y se informa con claridad en lugar de escribir un WAV con
+/// extension `.mp3`.
 pub async fn export_to_audio(
     raw_text: &str,
     output_path: &str,
@@ -63,36 +89,59 @@ pub async fn export_to_audio(
         return export_to_wav(raw_text, output_path, settings).await;
     }
 
-    // MP3 Export
+    #[cfg(not(target_os = "windows"))]
+    {
+        let _ = (raw_text, output_path, settings);
+        Err("La exportacion a MP3 solo esta disponible en Windows.".to_string())
+    }
+
     #[cfg(target_os = "windows")]
     {
         use std::env::temp_dir;
-        use windows::Media::MediaProperties::{AudioEncodingQuality, MediaEncodingProfile};
-        use windows::Media::Transcoding::MediaTranscoder;
-        use windows::Storage::{CreationCollisionOption, StorageFile, StorageFolder};
 
-        // 1. Generate intermediate WAV in temp
-        let temp_wav_path = temp_dir().join(format!("wintts_temp_{}.wav", std::time::SystemTime::now().duration_since(std::time::UNIX_EPOCH).unwrap_or_default().as_millis()));
+        let temp_wav_path = temp_dir().join(format!(
+            "wintts_temp_{}.wav",
+            std::time::SystemTime::now()
+                .duration_since(std::time::UNIX_EPOCH)
+                .unwrap_or_default()
+                .as_millis()
+        ));
         let temp_wav_str = temp_wav_path.to_string_lossy().to_string();
 
         export_to_wav(raw_text, &temp_wav_str, settings).await?;
 
-        // 2. Transcode to MP3 using Windows Media Foundation
-        let wav_hstring = windows::core::HSTRING::from(&temp_wav_str);
+        let result = transcode_wav_to_mp3(&temp_wav_str, output_path);
+
+        let _ = std::fs::remove_file(temp_wav_path);
+
+        result?;
+        Ok(output_path.to_string())
+    }
+}
+
+/// Transcodifica un WAV existente a MP3 (Windows Media Foundation).
+pub fn transcode_wav_to_mp3(src_wav: &str, dest_path: &str) -> Result<(), String> {
+    #[cfg(target_os = "windows")]
+    {
+        use windows::Media::MediaProperties::{AudioEncodingQuality, MediaEncodingProfile};
+        use windows::Media::Transcoding::MediaTranscoder;
+        use windows::Storage::{CreationCollisionOption, StorageFile, StorageFolder};
+
+        let wav_hstring = windows::core::HSTRING::from(src_wav);
         let src_file = StorageFile::GetFileFromPathAsync(&wav_hstring)
             .map_err(|e| e.to_string())?
             .get()
             .map_err(|e| e.to_string())?;
 
-        let dest_path_obj = std::path::Path::new(output_path);
+        let dest_path_obj = std::path::Path::new(dest_path);
         let parent_dir = dest_path_obj
             .parent()
-            .ok_or("Directorio de destino inválido")?
+            .ok_or("Directorio de destino invalido")?
             .to_string_lossy()
             .to_string();
         let file_name = dest_path_obj
             .file_name()
-            .ok_or("Nombre de archivo inválido")?
+            .ok_or("Nombre de archivo invalido")?
             .to_string_lossy()
             .to_string();
 
@@ -110,8 +159,8 @@ pub async fn export_to_audio(
             .get()
             .map_err(|e| e.to_string())?;
 
-        let profile = MediaEncodingProfile::CreateMp3(AudioEncodingQuality::High)
-            .map_err(|e| e.to_string())?;
+        let profile =
+            MediaEncodingProfile::CreateMp3(AudioEncodingQuality::High).map_err(|e| e.to_string())?;
 
         let transcoder = MediaTranscoder::new().map_err(|e| e.to_string())?;
         let prepared = transcoder
@@ -126,12 +175,8 @@ pub async fn export_to_audio(
                 .map_err(|e| e.to_string())?
                 .get()
                 .map_err(|e| e.to_string())?;
-
-            // Cleanup temp file
-            let _ = std::fs::remove_file(temp_wav_path);
-            Ok(output_path.to_string())
+            Ok(())
         } else {
-            let _ = std::fs::remove_file(temp_wav_path);
             let reason = prepared
                 .FailureReason()
                 .map(|r| format!("{:?}", r))
@@ -142,9 +187,33 @@ pub async fn export_to_audio(
 
     #[cfg(not(target_os = "windows"))]
     {
-        // Fallback to WAV for non-Windows platforms
-        export_to_wav(raw_text, output_path, settings).await
+        let _ = (src_wav, dest_path);
+        Err("La exportacion a MP3 solo esta disponible en Windows.".to_string())
     }
+}
+
+/// Exporta un WAV ya sintetizado (por ejemplo, generado por Piper) al destino
+/// solicitado, transcodificando a MP3 si hace falta.
+pub async fn export_wav_file(
+    wav_path: &str,
+    dest_path: &str,
+    format: &str,
+) -> Result<String, String> {
+    let is_mp3 = format.eq_ignore_ascii_case("mp3") || dest_path.to_lowercase().ends_with(".mp3");
+
+    if is_mp3 {
+        transcode_wav_to_mp3(wav_path, dest_path)?;
+        return Ok(dest_path.to_string());
+    }
+
+    std::fs::copy(wav_path, dest_path).map_err(|e| {
+        format!(
+            "No se pudo copiar el audio a '{}': {}",
+            dest_path, e
+        )
+    })?;
+
+    Ok(dest_path.to_string())
 }
 
 pub async fn export_to_wav(
@@ -191,7 +260,8 @@ pub async fn export_to_wav(
             }
         }
 
-        let ssml = build_ssml(&clean_text, "es-PE", settings.pitch);
+        let culture = resolve_culture(settings.voice_name.as_deref());
+        let ssml = build_ssml(&clean_text, &culture, settings.pitch);
         let stream = synth
             .SynthesizeSsmlToStreamAsync(&windows::core::HSTRING::from(&ssml))
             .map_err(|e| e.to_string())?
@@ -229,5 +299,30 @@ pub async fn export_to_wav(
         }
         writer.finalize().map_err(|e| e.to_string())?;
         Ok(output_path.to_string())
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn resolve_culture_falls_back_without_voice() {
+        assert_eq!(resolve_culture(None), DEFAULT_CULTURE);
+        assert_eq!(resolve_culture(Some("   ")), DEFAULT_CULTURE);
+    }
+
+    #[test]
+    fn resolve_culture_uses_voice_culture_when_known() {
+        let voices = get_system_voices();
+        let Some(voice) = voices.first() else {
+            return;
+        };
+        let resolved = resolve_culture(Some(&voice.name));
+        if voice.culture.trim().is_empty() {
+            assert_eq!(resolved, DEFAULT_CULTURE);
+        } else {
+            assert_eq!(resolved, voice.culture);
+        }
     }
 }

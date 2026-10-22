@@ -149,6 +149,82 @@
   margin-top: 2px;
 }
 
+/* Estado real del motor neuronal */
+.engine-status-ok {
+  background: rgba(45, 212, 191, 0.08);
+  border-color: rgba(45, 212, 191, 0.28);
+}
+
+.engine-status-warn {
+  background: rgba(245, 158, 11, 0.08);
+  border-color: rgba(245, 158, 11, 0.32);
+}
+
+.engine-status-warn .info-banner-icon {
+  color: #FBBF24;
+}
+
+.engine-status code {
+  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+  font-size: 0.92em;
+  background: rgba(255, 255, 255, 0.06);
+  padding: 1px 5px;
+  border-radius: 4px;
+}
+
+.engine-test-status {
+  margin-top: 4px;
+  color: var(--accent-hover);
+}
+
+.engine-effective-path {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin-top: 4px;
+  word-break: break-all;
+}
+
+.btn-test-engine {
+  height: 46px !important;
+  min-height: 46px !important;
+  padding: 0 16px !important;
+  font-size: 13.5px !important;
+  font-weight: 500 !important;
+  border-radius: 10px !important;
+  white-space: nowrap;
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+}
+
+.download-progress {
+  margin-top: 9px;
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+}
+
+.download-progress-track {
+  height: 4px;
+  background: var(--surface-raised);
+  border-radius: 999px;
+  overflow: hidden;
+}
+
+.download-progress-fill {
+  height: 100%;
+  background: var(--accent-color);
+  border-radius: 999px;
+  transition: width 0.2s ease;
+}
+
+.download-progress-label {
+  font-size: 11px;
+  color: var(--text-secondary);
+  font-variant-numeric: tabular-nums;
+}
+
 .setting-group {
   display: flex;
   flex-direction: column;

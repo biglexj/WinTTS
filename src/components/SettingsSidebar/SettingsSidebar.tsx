@@ -15,6 +15,7 @@ interface SettingsSidebarProps {
   isExporting?: boolean;
   enablePiper?: boolean;
   systemVoiceLanguages?: string[];
+  piperEngineReady?: boolean;
 }
 
 export const SettingsSidebar: React.FC<SettingsSidebarProps> = ({
@@ -28,6 +29,7 @@ export const SettingsSidebar: React.FC<SettingsSidebarProps> = ({
   isExporting = false,
   enablePiper = true,
   systemVoiceLanguages = ['es'],
+  piperEngineReady = false,
 }) => {
   const handleVoiceChange = (newVoiceName: string) => {
     onSettingsChange({
@@ -133,7 +135,12 @@ export const SettingsSidebar: React.FC<SettingsSidebarProps> = ({
           <div className="field-group">
             <div className="field-label-row">
               <label className="field-label">VOZ PIPER (NEURAL)</label>
-              {isPiperActive && <span className="active-voice-pill active-piper-pill">ACTIVA</span>}
+              {isPiperActive &&
+                (piperEngineReady ? (
+                  <span className="active-voice-pill active-piper-pill">ACTIVA</span>
+                ) : (
+                  <span className="active-voice-pill active-piper-pill piper-pill-warn">SIN MOTOR</span>
+                ))}
             </div>
             <VoiceSelector
               voices={piperVoices}
@@ -144,6 +151,12 @@ export const SettingsSidebar: React.FC<SettingsSidebarProps> = ({
               isActive={isPiperActive}
               placeholder="Seleccionar voz neuronal…"
             />
+            {enablePiper && !piperEngineReady && (
+              <p className="sidebar-hint">
+                Para usar las voces neuronales indica la ruta de <code>piper.exe</code> en Ajustes → Motor
+                Piper TTS. Hasta entonces la aplicación no las usará en silencio.
+              </p>
+            )}
           </div>
         )}
 

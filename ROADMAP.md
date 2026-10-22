@@ -4,17 +4,20 @@ Plan de trabajo, objetivos y prioridades del proyecto.
 
 ## 🔴 Urgente / Normal (Pendientes Activos)
 
-- [ ] Soporte para descarga e inferencia local directa de modelos `.onnx` de Piper TTS.
-- [ ] Exportación directa a formato MP3/OGG multiplataforma.
+- [ ] Soporte para descarga e inferencia local directa de modelos `.onnx` de Piper TTS **con ONNX Runtime propio** (sin depender de `piper.exe` externo).
+- [ ] Exportación directa a formato MP3/OGG multiplataforma (hoy MP3 requiere Windows Media Foundation).
 
 ## 🟡 Intermedio (Prioridad Media/Baja)
 
-- [ ] Persistencia de configuración de voz, temas y archivos recientes en almacenamiento local seguro.
-- [ ] Soporte para atajos globales de teclado en segundo plano.
+- [ ] Reanudar la lectura desde el punto en que se detuvo (recordar `charIndex`).
+- [ ] Exportar por capítulos: un archivo de audio por cada encabezado del documento.
+- [ ] Atajos globales de teclado en segundo plano.
+- [ ] Resaltado de la palabra en lectura dentro de la vista renderizada (el motor del sistema ya emite los eventos `onboundary`; falta mapearlos sobre la vista).
 
 ## ⚪ Descartado / En Pausa
 
 - ⏸️ TTS en la nube: descartado para preservar la privacidad y la ejecución 100% offline.
+- ⏸️ Modelos de IA generativa en el flujo de lectura: el costo por token no escala con documentos largos y rompería la promesa de privacidad.
 
 ## 🟢 Completado
 
@@ -29,3 +32,12 @@ Plan de trabajo, objetivos y prioridades del proyecto.
 - [x] Exportación de narraciones a archivo WAV de alta fidelidad.
 - [x] Interfaz oscura Slate/Teal sin marco con barra de título y estado personalizadas.
 - [x] Versión `2.0.0` “Nougat Update”.
+- [x] **Abrir, Guardar y Guardar como** con atajos `Ctrl+O`, `Ctrl+S` y `Ctrl+Shift+S`, y borrador persistente entre sesiones.
+- [x] **Motor Piper real**: descarga de pesos desde Hugging Face con progreso, verificacion en disco, sintesis con `piper.exe` y reproduccion del WAV generado.
+- [x] **Estado honesto del motor**: la interfaz avisa cuando falta el motor en vez de cambiar de voz en silencio.
+- [x] **Reajuste de las omisiones al editar** el documento.
+- [x] **Persistencia de voz, volumen, velocidad y tono** entre sesiones.
+- [x] **Idioma del audio exportado acorde a la voz elegida** (ya no forzado a `es-PE`).
+- [x] Corrección de la exportación WAV, que fallaba con el tono por defecto (`pitch="0st"` no es SSML válido).
+- [x] Catálogo de Piper contrastado contra el repositorio real de Hugging Face (entradas y tamaños corregidos).
+- [x] Versión `2.1.0` “Nugget Update”.
