@@ -1,0 +1,85 @@
+.drop-overlay-backdrop {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(15, 23, 42, 0.85);
+  backdrop-filter: blur(8px);
+  z-index: 9999;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  animation: fadeIn 0.15s ease-out;
+  pointer-events: none;
+}
+
+.drop-overlay-card {
+  width: 440px;
+  padding: 36px 28px;
+  background: var(--surface-bg);
+  border: 2px dashed var(--accent-color);
+  border-radius: 16px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  box-shadow: 0 20px 40px rgba(0, 0, 0, 0.6), 0 0 25px rgba(45, 212, 191, 0.2);
+  transform: scale(1);
+  animation: scaleIn 0.2s ease-out;
+}
+
+.drop-icon-container {
+  position: relative;
+  width: 64px;
+  height: 64px;
+  margin-bottom: 16px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--accent-color);
+}
+
+.drop-icon-animated {
+  animation: bounce 1.2s infinite ease-in-out;
+}
+
+.drop-icon-sub {
+  position: absolute;
+  bottom: -2px;
+  right: -2px;
+  color: var(--text-primary);
+  opacity: 0.9;
+}
+
+.drop-overlay-title {
+  font-size: 20px;
+  font-weight: 700;
+  color: var(--text-primary);
+  margin-bottom: 6px;
+}
+
+.drop-overlay-subtitle {
+  font-size: 14px;
+  color: var(--text-secondary);
+  line-height: 1.5;
+}
+
+.drop-overlay-subtitle strong {
+  color: var(--accent-color);
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+@keyframes scaleIn {
+  from { transform: scale(0.92); opacity: 0; }
+  to { transform: scale(1); opacity: 1; }
+}
+
+@keyframes bounce {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-8px); }
+}

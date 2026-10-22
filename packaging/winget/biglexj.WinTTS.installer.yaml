@@ -1,0 +1,28 @@
+# Manifiesto WinGet preparado para el instalador Inno Setup de WinTTS.
+# NO PUBLICADO. El cambio de tipo (portable -> inno) queda listo, pero la
+# URL y el SHA-256 solo son validos cuando exista el release de GitHub.
+#
+# El SHA-256 lo reescribe scripts\packaging\Build-Installer.ps1 con el hash
+# del instalador recien compilado. Antes de publicar hay que confirmar que
+# InstallerUrl apunta al artefacto publicado con ese mismo hash.
+#
+# yaml-language-server: $schema=https://aka.ms/winget-manifest.installer.1.10.0.schema.json
+
+PackageIdentifier: biglexj.WinTTS
+PackageVersion: 2.0.0
+Platform:
+  - Windows.Desktop
+MinimumOSVersion: 10.0.17763.0
+InstallerType: inno
+Scope: user
+Commands:
+  - wintts
+InstallerSwitches:
+  Silent: /VERYSILENT
+  SilentWithProgress: /SILENT
+Installers:
+  - Architecture: x64
+    InstallerUrl: https://github.com/biglexj/WinTTS/releases/download/v2.0.0/WinTTS-Setup-2.0.0.exe
+    InstallerSha256: 23D65C983A115629A4B39D3B7AA133EDFC5A45FC658257F71F531C972FC3930A
+ManifestType: installer
+ManifestVersion: 1.10.0

@@ -5,8 +5,7 @@ description: Versionado, validación y publicación de WinTTS
 
 # Releases
 
-- `WinTTS.csproj` define la versión de producto; sincronizar `AssemblyVersion`, `FileVersion` y `Package.appxmanifest`.
-- No crear otro parche si la versión activa todavía no fue publicada. Nunca usar un parche superior a `.9`.
+- No crear otro parche si la versión activa todavía no fue publicada. SemVer flexible sin límite artificial por dígito (Docs v1.7.0).
 - Antes de publicar: restaurar, compilar Release, ejecutar todas las pruebas y generar hashes SHA-256.
 - Los artefactos viven en `release/` y no se versionan. GitHub Releases recibe el EXE portable y `SHA256SUMS.txt`.
 - Actualizar los manifiestos WinGet con versión, URL y hash exactos del artefacto final.

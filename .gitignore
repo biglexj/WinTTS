@@ -1,13 +1,29 @@
+# Node / Frontend
+node_modules/
+dist/
+.vite/
+
+# Rust / Tauri
+src-tauri/target/
+src-tauri/gen/
+
+# Legacy .NET / WPF
 /bin/
 /obj/
 /publish/
 /release/
 /.vs/
 
-# Carpetas temporales y de pruebas (Reglas del Agente)
+# Artefactos de compilacion del legacy archivado (fuente si; binarios no)
+/archivado/bin/
+/archivado/obj/
+/archivado/WinTTS.Tests/bin/
+/archivado/WinTTS.Tests/obj/
+/archivado/test/
+
+# Carpetas temporales y de pruebas
 /test/
 /scratch/
 
-# Certificados privados: los archivos históricos requieren rotación separada,
-# pero ningún certificado nuevo debe entrar al repositorio.
+# Certificados privados
 *.pfx

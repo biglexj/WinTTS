@@ -1,0 +1,17 @@
+:root {
+  --app-bg: #0F172A;
+  --surface-bg: #1E293B;
+  --surface-raised: #273449;
+  --surface-hover: #475569;
+  --surface-selected: #164E63;
+  --border-color: #3A4A63;
+  --accent-color: #2DD4BF;
+  --accent-hover: #5EEAD4;
+  --text-primary: #F8FAFC;
+  --text-secondary: #A8B4C7;
+  --danger-color: #FB7185;
+  --danger-hover-bg: rgba(251, 113, 133, 0.15);
+  --disabled-color: #64748B;
+  --skipped-color: #FBBF24;
+  --skipped-bg: rgba(251, 191, 36, 0.15);
+}

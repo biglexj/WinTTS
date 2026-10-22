@@ -4,31 +4,28 @@ Plan de trabajo, objetivos y prioridades del proyecto.
 
 ## 🔴 Urgente / Normal (Pendientes Activos)
 
-- Sin pendientes críticos abiertos para el hito `1.0.1`.
+- [ ] Soporte para descarga e inferencia local directa de modelos `.onnx` de Piper TTS.
+- [ ] Exportación directa a formato MP3/OGG multiplataforma.
 
 ## 🟡 Intermedio (Prioridad Media/Baja)
 
-- [ ] Incorporar importación y guardado de `.txt` y `.md`.
-- [ ] Persistir configuración, archivos recientes y fragmentos omitidos mediante un formato seguro.
-- [ ] Evaluar exportación MP3 según licencia, tamaño y compatibilidad MSIX.
-- [ ] Añadir previsualización del texto procesado y estimación avanzada de duración.
+- [ ] Persistencia de configuración de voz, temas y archivos recientes en almacenamiento local seguro.
+- [ ] Soporte para atajos globales de teclado en segundo plano.
 
 ## ⚪ Descartado / En Pausa
 
-- ⏸️ Migración de WPF o uso de TTS en la nube: fuera del alcance; se conserva la ejecución local y privada.
+- ⏸️ TTS en la nube: descartado para preservar la privacidad y la ejecución 100% offline.
 
 ## 🟢 Completado
 
-- [x] Primera versión estable WinTTS `1.0.0` “Alfajor”.
-- [x] Motor TTS local mediante `System.Speech.Synthesis`.
-- [x] Selección de voces instaladas y ajuste de volumen.
-- [x] Cambio de voz durante la lectura, retomando tras la última palabra procesada y conservando la pausa.
-- [x] Vista Markdown renderizada con modo fuente y resaltado de elementos no narrados.
-- [x] Preprocesamiento Markdown y omisión de emojis cubiertos por pruebas automatizadas.
-- [x] Reproducción, pausa, reanudación y detención mediante estados explícitos.
-- [x] Velocidad, tono, lectura de selección y fragmentos omitidos.
-- [x] Exportación WAV cancelable con la misma configuración de reproducción.
-- [x] Iconos, colores, foco, contraste y estados de controles unificados.
-- [x] WinTTS `1.0.1` compilado, validado y publicado con binario portable y SHA-256.
-- [x] Interfaz oscura inicial con barra de título personalizada.
-- [x] Plan de implementación y reglas documentales normalizadas desde los templates del autor.
+- [x] Migración total de arquitectura a **Rust + Tauri 2.0** (Vite + React + TypeScript).
+- [x] Agrupación y resguardo del código C#/WPF legacy en `archivado/`.
+- [x] Arrastrar y soltar inteligente (Drag & Drop) para archivos `.md` y `.txt` con overlay visual animado.
+- [x] Preprocesamiento de texto y stripping de Markdown en Rust con 100% de cobertura en tests.
+- [x] Catálogo de voces del sistema y soporte para voces neuronales Piper TTS.
+- [x] Modos de edición dual: Vista Markdown renderizada y editor de código fuente.
+- [x] Marcado y gestión de fragmentos omitidos con resaltado ámbar.
+- [x] Control de reproducción (Reproducir, Pausar, Reanudar, Detener) y sliders de volumen, velocidad y tono.
+- [x] Exportación de narraciones a archivo WAV de alta fidelidad.
+- [x] Interfaz oscura Slate/Teal sin marco con barra de título y estado personalizadas.
+- [x] Versión `2.0.0` “Nougat Update”.

@@ -1,18 +1,15 @@
 # Referencia Completa de Scripts de WinTTS
 
-## build-release.ps1
+## scripts/build-release.ps1
 
-Flujo integral para una versión pública. Lee la versión de `WinTTS.csproj`, sincroniza el manifiesto, ejecuta build y pruebas, crea el EXE self-contained, calcula SHA-256, actualiza y valida WinGet, y finalmente publica commit, tag y GitHub Release.
+Flujo integral para una versión pública. Compila el frontend y backend en Release, ejecuta pruebas de Rust, crea el ejecutable portable y el paquete MSIX para Windows Store, y genera los hashes SHA-256 en la carpeta `release/`.
 
 ```powershell
-.\build-release.ps1 -LocalOnly
-.\build-release.ps1 -SkipBuild
+.\scripts\build-release.ps1 -Version 2.0.0
+.\scripts\build-release.ps1 -Version 2.0.0 -SkipTests
 ```
 
 `-LocalOnly` omite Git y GitHub. `-SkipBuild` reutiliza exclusivamente `publish/exe/WinTTS.exe`, útil después de un ensayo local exitoso.
-
-## 📋 Tabla de Contenidos
-
 1. [Introducción](#introducción)
 2. [Scripts para MSIX](#scripts-para-msix)
 3. [Scripts para EXE Portable](#scripts-para-exe-portable)

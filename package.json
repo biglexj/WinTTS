@@ -1,0 +1,48 @@
+{
+  "name": "wintts",
+  "private": true,
+  "version": "2.0.0",
+  "type": "module",
+  "scripts": {
+    "dev": "vite",
+    "build": "tsc && vite build",
+    "build:web": "tsc && vite build",
+    "build:desktop": "tauri build",
+    "build:app": "tauri build",
+    "build:tauri": "tauri build",
+    "build:debug": "tauri build --debug",
+    "build:release": "npm run release",
+    "compile": "npm run build",
+    "compile:web": "tsc && vite build",
+    "compile:desktop": "tauri build",
+    "compile:debug": "tauri build --debug",
+    "compile:check": "tsc --noEmit",
+    "check": "tsc --noEmit",
+    "preview": "vite preview",
+    "tauri": "tauri",
+    "tauri:dev": "tauri dev",
+    "tauri:build": "tauri build",
+    "tauri:build:debug": "tauri build --debug",
+    "release": "pwsh -ExecutionPolicy Bypass -File ./scripts/build-release.ps1 -SkipTests",
+    "release:local": "pwsh -ExecutionPolicy Bypass -File ./scripts/build-release.ps1 -SkipTests",
+    "release:publish": "pwsh -ExecutionPolicy Bypass -File ./scripts/build-release.ps1"
+  },
+  "dependencies": {
+    "@tauri-apps/api": "^2.2.0",
+    "@tauri-apps/plugin-dialog": "^2.2.0",
+    "@tauri-apps/plugin-fs": "^2.2.0",
+    "@tauri-apps/plugin-opener": "^2.2.5",
+    "lucide-react": "^1.16.0",
+    "react": "^19.0.0",
+    "react-dom": "^19.0.0"
+  },
+  "devDependencies": {
+    "@tauri-apps/cli": "^2.2.7",
+    "@types/node": "^22.13.5",
+    "@types/react": "^19.0.10",
+    "@types/react-dom": "^19.0.4",
+    "@vitejs/plugin-react": "^4.3.4",
+    "typescript": "^5.7.3",
+    "vite": "^6.2.0"
+  }
+}

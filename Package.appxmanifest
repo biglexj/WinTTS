@@ -7,7 +7,7 @@
   <Identity
     Name="biglexj.WinTTS"
     Publisher="CN=C90A4D85-591F-46E3-AA49-75B551A23CED"
-    Version="1.0.1.0" />
+    Version="2.0.0.0" />
 
   <Properties>
     <DisplayName>WinTTS</DisplayName>
@@ -16,20 +16,21 @@
   </Properties>
 
   <Dependencies>
-    <TargetDeviceFamily Name="Windows.Desktop" MinVersion="10.0.17763.0" MaxVersionTested="10.0.19041.0" />
+    <TargetDeviceFamily Name="Windows.Desktop" MinVersion="10.0.17763.0" MaxVersionTested="10.0.22621.0" />
   </Dependencies>
 
   <Resources>
     <Resource Language="es-ES"/>
+    <Resource Language="en-US"/>
   </Resources>
 
   <Applications>
     <Application Id="App"
-      Executable="$targetnametoken$.exe"
+      Executable="wintts.exe"
       EntryPoint="Windows.FullTrustApplication">
       <uap:VisualElements
         DisplayName="WinTTS"
-        Description="WinTTS Application"
+        Description="WinTTS — Local Speech &amp; Neural Reader (Rust + Tauri 2.0 Edition)"
         BackgroundColor="transparent"
         Square150x150Logo="Image\Square150x150Logo.png"
         Square44x44Logo="Image\Square44x44Logo.png">

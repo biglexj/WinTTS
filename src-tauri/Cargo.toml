@@ -1,0 +1,36 @@
+[package]
+name = "wintts"
+version = "2.0.0"
+description = "WinTTS — Local Speech & Neural Reader"
+authors = ["biglexj"]
+edition = "2021"
+
+[lib]
+name = "wintts_lib"
+crate-type = ["staticlib", "rlib"]
+
+[build-dependencies]
+tauri-build = { version = "2.0.5", features = [] }
+
+[dependencies]
+tauri = { version = "2.2.5", features = [] }
+tauri-plugin-opener = "2"
+tauri-plugin-dialog = "2"
+tauri-plugin-fs = "2"
+tauri-plugin-window-state = "2"
+serde = { version = "1.0", features = ["derive"] }
+serde_json = "1.0"
+regex = "1.10"
+hound = "3.5"
+tokio = { version = "1", features = ["full"] }
+
+[target.'cfg(windows)'.dependencies]
+windows = { version = "0.58", features = [
+    "Media_SpeechSynthesis",
+    "Media_Transcoding",
+    "Media_MediaProperties",
+    "Storage",
+    "Storage_Streams",
+    "Foundation",
+    "Foundation_Collections"
+] }

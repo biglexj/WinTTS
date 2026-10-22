@@ -8,10 +8,10 @@ El flujo principal sincroniza la versión, compila, ejecuta pruebas, genera el E
 
 ```powershell
 # Ensayo completo sin modificar Git ni GitHub
-.\build-release.ps1 -Version 1.0.1 -LocalOnly
+.\scripts\build-release.ps1 -Version 2.0.0 -SkipTests
 
-# Publicación del binario ya validado localmente
-.\build-release.ps1 -Version 1.0.1 -SkipBuild
+# Publicación del binario y paquete MSIX
+.\scripts\build-release.ps1 -Version 2.0.0
 ```
 
 El segundo comando requiere autenticación activa de Git y GitHub CLI. Los certificados `.pfx` nunca se adjuntan al release.
