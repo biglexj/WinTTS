@@ -1,6 +1,6 @@
 [package]
 name = "wintts"
-version = "2.1.0"
+version = "2.0.0"
 description = "WinTTS — Local Speech & Neural Reader"
 authors = ["biglexj"]
 edition = "2021"
@@ -25,6 +25,8 @@ hound = "3.5"
 tokio = { version = "1", features = ["full"] }
 reqwest = { version = "0.12", default-features = false, features = ["rustls-tls", "stream"] }
 futures-util = "0.3"
+zip = { version = "9.1.2", default-features = false, features = ["deflate"] }
+sha2 = "0.10"
 
 [target.'cfg(windows)'.dependencies]
 windows = { version = "0.58", features = [

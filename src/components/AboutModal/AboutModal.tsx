@@ -6,9 +6,11 @@ import './AboutModal.css';
 interface AboutModalProps {
   isOpen: boolean;
   onClose: () => void;
+  /** El motor neural solo se menciona cuando esta instalado. */
+  piperActive?: boolean;
 }
 
-export const AboutModal: React.FC<AboutModalProps> = ({ isOpen, onClose }) => {
+export const AboutModal: React.FC<AboutModalProps> = ({ isOpen, onClose, piperActive = false }) => {
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
       if (e.key === 'Escape' && isOpen) {
@@ -34,7 +36,7 @@ export const AboutModal: React.FC<AboutModalProps> = ({ isOpen, onClose }) => {
             <img src="/Image/app_icon.ico" alt="WinTTS" className="about-app-icon" />
             <div>
               <h2 className="about-title">WinTTS</h2>
-              <p className="about-version">v2.0.0 (Nougat Update) · Local Speech</p>
+              <p className="about-version">v2.0.0 (Nougat &amp; Nugget Update) · Local Speech</p>
             </div>
           </div>
           <button className="modal-close-btn" onClick={onClose} title="Cerrar (Esc)">
@@ -57,10 +59,12 @@ export const AboutModal: React.FC<AboutModalProps> = ({ isOpen, onClose }) => {
               <Shield size={14} className="badge-icon" />
               <span>100% Privado Offline</span>
             </div>
-            <div className="about-badge">
-              <Sparkles size={14} className="badge-icon" />
-              <span>Piper Neural Ready</span>
-            </div>
+            {piperActive && (
+              <div className="about-badge">
+                <Sparkles size={14} className="badge-icon" />
+                <span>Piper Neural Ready</span>
+              </div>
+            )}
           </div>
 
           <div className="about-divider" />

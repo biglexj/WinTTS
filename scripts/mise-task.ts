@@ -2,6 +2,7 @@
 import { createHash } from "node:crypto";
 import { existsSync, readdirSync, readFileSync, statSync } from "node:fs";
 import { resolve, join } from "node:path";
+import { publishWinTTS } from "./release/publish-wintts.ts";
 
 const root = resolve(import.meta.dir, "..");
 
@@ -31,10 +32,11 @@ const repository = "biglexj/WinTTS";
 const help = `WinTTS: mise <dev|build|release|publish> [opciones]
   dev      Ejecutar en modo desarrollo (Tauri v2 + React).
   build    Compilar frontend y binario de escritorio sin generar instalador.
-  release  Generar instalador oficial Inno Setup en release/.
+  release  Generar instalador oficial Inno Setup (.exe) y paquete Store (.msix) en release/.
   publish  [github|all] Publicar en GitHub y sincronizar ficha en Aurora.
   --plan   Mostrar los comandos o el plan sin ejecutar acciones ni escribir.
   --check  Para publish: verificar requisitos locales y remotos sin escribir.
+  --resume Para publish: continuar un borrador existente o sincronizar ficha.
 
 Ejemplos:
   mise dev
@@ -141,7 +143,7 @@ export async function main(args = Bun.argv.slice(2)): Promise<number> {
     }
 
     if (action === "publish") {
-        return handlePublish(rest);
+        return publishWinTTS(rest);
     }
 
     const isPlan = rest.includes("--plan");
@@ -174,7 +176,7 @@ export async function main(args = Bun.argv.slice(2)): Promise<number> {
     if (action === "release") {
         const psArgs = [
             "powershell", "-NoProfile", "-ExecutionPolicy", "Bypass",
-            "-File", "./scripts/packaging/Build-Installer.ps1",
+            "-File", "./scripts/build-release.ps1",
         ];
         console.log(`release ${appName}\nDirectorio: ${root}\nComando: ${psArgs.join(" ")}`);
         if (isPlan) return 0;

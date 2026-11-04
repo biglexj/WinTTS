@@ -1,8 +1,8 @@
 import React, { useState, useEffect, useCallback, useMemo } from 'react';
+import { getCurrentWindow } from '@tauri-apps/api/window';
 import { TitleBar } from './components/TitleBar/TitleBar';
 import { SettingsSidebar } from './components/SettingsSidebar/SettingsSidebar';
 import { NarrationEditor } from './components/NarrationEditor/NarrationEditor';
-import { StatusBar } from './components/StatusBar/StatusBar';
 import { DropOverlay } from './components/DropZone/DropOverlay';
 import { SettingsModal } from './components/SettingsModal/SettingsModal';
 import { AboutModal } from './components/AboutModal/AboutModal';
@@ -10,11 +10,28 @@ import { useSpeech } from './hooks/useSpeech';
 import { useDocument } from './hooks/useDocument';
 import { useFileDrop } from './hooks/useFileDrop';
 import { usePiper } from './hooks/usePiper';
-import { tauriBridge } from './services/tauriBridge';
+import { tauriBridge, isTauri } from './services/tauriBridge';
 import type { AppSettings, SpeechSettings, SystemVoice } from './types';
 import './styles/global.css';
 
 export const App: React.FC = () => {
+  useEffect(() => {
+    if (!isTauri()) return;
+    let cancelled = false;
+    // El efecto se ejecuta con la interfaz ya montada. No espera voces ni
+    // descargas, ni usa animationFrame (puede suspenderse en ventanas ocultas).
+    const showWindow = async () => {
+      const appWindow = getCurrentWindow();
+      if (await appWindow.isVisible() || cancelled) return;
+      await appWindow.show();
+      if (!cancelled) await appWindow.setFocus();
+    };
+    void showWindow().catch((error) => console.error('No se pudo mostrar WinTTS:', error));
+    return () => {
+      cancelled = true;
+    };
+  }, []);
+
   const [appSettings, setAppSettings] = useState<AppSettings>(() => tauriBridge.loadAppSettings());
   const [isSettingsOpen, setIsSettingsOpen] = useState(false);
   const [isAboutOpen, setIsAboutOpen] = useState(false);
@@ -27,9 +44,7 @@ export const App: React.FC = () => {
 
   const {
     playbackState,
-    statusText,
     setStatusText,
-    progressPercent,
     speak,
     pause,
     resume,
@@ -60,11 +75,14 @@ export const App: React.FC = () => {
   const installedPiperIds = useMemo(() => piper.installed.map((m) => m.id), [piper.installed]);
   const installedPiperKey = installedPiperIds.join('|');
 
+  // El motor neural es opcional: solo aparece cuando esta instalado.
+  const piperActive = piper.engineReady;
+
   // Load available system and neural voices on startup and when Piper changes
   const loadVoices = useCallback(
-    async (enablePiper: boolean, installedModels: string[]) => {
+    async (engineReady: boolean, installedModels: string[]) => {
       try {
-        const list = await tauriBridge.getVoices(enablePiper, installedModels);
+        const list = await tauriBridge.getVoices(engineReady, installedModels);
         setVoices(list);
         if (list.length > 0) {
           setSettings((prev) => ({
@@ -85,9 +103,12 @@ export const App: React.FC = () => {
   );
 
   useEffect(() => {
-    loadVoices(appSettings.enablePiper, installedPiperIds);
+    // Se espera a que Piper se asiente: si no, la lista de voces se cargaria
+    // sin las voces neuronales y la voz elegida se perderia al reiniciar.
+    if (piper.loading) return;
+    loadVoices(piperActive, installedPiperIds);
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [loadVoices, appSettings.enablePiper, installedPiperKey]);
+  }, [loadVoices, piper.loading, piperActive, installedPiperKey]);
 
   // La lista de modelos instalados en disco es la fuente de verdad.
   useEffect(() => {
@@ -296,6 +317,7 @@ export const App: React.FC = () => {
       <AboutModal
         isOpen={isAboutOpen}
         onClose={() => setIsAboutOpen(false)}
+        piperActive={piperActive}
       />
 
       <TitleBar
@@ -303,7 +325,7 @@ export const App: React.FC = () => {
         onOpenAbout={() => setIsAboutOpen(true)}
       />
 
-      <main style={{ display: 'flex', gap: '18px', padding: '8px 20px 14px 20px', flex: 1, minHeight: 0, overflow: 'hidden' }}>
+      <main style={{ display: 'flex', gap: '18px', padding: '8px 20px 18px 20px', flex: 1, minHeight: 0, overflow: 'hidden' }}>
         <SettingsSidebar
           voices={voices}
           settings={settings}
@@ -313,9 +335,11 @@ export const App: React.FC = () => {
           onStop={stop}
           onExport={handleExportAudio}
           isExporting={isExporting}
-          enablePiper={appSettings.enablePiper}
+          piperActive={piperActive}
           systemVoiceLanguages={appSettings.systemVoiceLanguages}
-          piperEngineReady={piper.engineReady}
+          onOpenDocument={handleOpenDocument}
+          onSaveDocument={handleSaveDocument}
+          onSaveDocumentAs={handleSaveDocumentAs}
         />
 
         <NarrationEditor
@@ -331,17 +355,8 @@ export const App: React.FC = () => {
           fileName={fileName}
           filePath={filePath}
           isDirty={isDirty}
-          onOpenDocument={handleOpenDocument}
-          onSaveDocument={handleSaveDocument}
-          onSaveDocumentAs={handleSaveDocumentAs}
         />
       </main>
-
-      <StatusBar
-        statusText={statusText}
-        playbackState={playbackState}
-        progressPercent={progressPercent}
-      />
     </div>
   );
 };

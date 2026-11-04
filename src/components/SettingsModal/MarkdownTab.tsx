@@ -11,12 +11,12 @@ export const MarkdownTab: React.FC<MarkdownTabProps> = ({ formState, setFormStat
     <div className="tab-content animate-fade">
       <div className="setting-row-toggle">
         <div>
-          <div className="setting-label">Omitir Emojis Automáticamente</div>
-          <div className="setting-desc">Evita que el sintetizador lea los nombres descriptivos en voz alta.</div>
+          <div className="setting-label">Omitir emojis</div>
         </div>
         <input
           type="checkbox"
           className="setting-checkbox"
+          aria-label="Omitir emojis"
           checked={formState.stripEmojis}
           onChange={(e) => setFormState((prev) => ({ ...prev, stripEmojis: e.target.checked }))}
         />
@@ -24,12 +24,12 @@ export const MarkdownTab: React.FC<MarkdownTabProps> = ({ formState, setFormStat
 
       <div className="setting-row-toggle">
         <div>
-          <div className="setting-label">Omitir Bloques de Código Delimitados (```)</div>
-          <div className="setting-desc">Excluye fragmentos de código técnico para una narración fluida.</div>
+          <div className="setting-label">Omitir bloques de código</div>
         </div>
         <input
           type="checkbox"
           className="setting-checkbox"
+          aria-label="Omitir bloques de código"
           checked={formState.stripCodeBlocks}
           onChange={(e) => setFormState((prev) => ({ ...prev, stripCodeBlocks: e.target.checked }))}
         />

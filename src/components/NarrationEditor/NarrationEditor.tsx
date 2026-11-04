@@ -1,6 +1,6 @@
 import React, { useRef, useState, useCallback, useEffect } from 'react';
 import type { DocumentStats, SkippedRange } from '../../types';
-import { Volume2, EyeOff, RotateCcw, Trash2, Code2, Eye, FolderOpen, Save } from 'lucide-react';
+import { Volume2, EyeOff, RotateCcw, Trash2, Code2, Eye } from 'lucide-react';
 import './NarrationEditor.css';
 
 interface NarrationEditorProps {
@@ -16,9 +16,6 @@ interface NarrationEditorProps {
   fileName: string;
   filePath: string | null;
   isDirty: boolean;
-  onOpenDocument: () => void;
-  onSaveDocument: () => void;
-  onSaveDocumentAs: () => void;
 }
 
 function parseInlineMarkdown(text: string): React.ReactNode[] {
@@ -154,9 +151,6 @@ export const NarrationEditor: React.FC<NarrationEditorProps> = ({
   fileName,
   filePath,
   isDirty,
-  onOpenDocument,
-  onSaveDocument,
-  onSaveDocumentAs,
 }) => {
   const [isPreview, setIsPreview] = useState(true);
   const textareaRef = useRef<HTMLTextAreaElement | null>(null);
@@ -315,38 +309,6 @@ export const NarrationEditor: React.FC<NarrationEditorProps> = ({
         <button
           className="btn-base toolbar-btn"
           onMouseDown={(e) => e.preventDefault()}
-          onClick={onOpenDocument}
-          title="Abrir un documento .md o .txt (Ctrl+O)"
-        >
-          <FolderOpen size={15} />
-          <span>Abrir</span>
-        </button>
-
-        <button
-          className="btn-base toolbar-btn"
-          onMouseDown={(e) => e.preventDefault()}
-          onClick={onSaveDocument}
-          title="Guardar el documento (Ctrl+S)"
-        >
-          <Save size={15} />
-          <span>Guardar</span>
-        </button>
-
-        <button
-          className="btn-base toolbar-btn"
-          onMouseDown={(e) => e.preventDefault()}
-          onClick={onSaveDocumentAs}
-          title="Guardar con otro nombre (Ctrl+Shift+S)"
-        >
-          <Save size={15} />
-          <span>Guardar como</span>
-        </button>
-
-        <span className="toolbar-separator" />
-
-        <button
-          className="btn-base toolbar-btn"
-          onMouseDown={(e) => e.preventDefault()}
           onClick={onReadSelection}
           title="Lee únicamente el texto seleccionado"
         >
@@ -407,7 +369,7 @@ export const NarrationEditor: React.FC<NarrationEditorProps> = ({
         )}
       </div>
 
-      {/* Bottom Controls & Legend */}
+      {/* Bottom Controls */}
       <div className="editor-footer">
         <button
           className={`mode-toggle-btn ${isPreview ? 'mode-toggle-active' : ''}`}
@@ -417,11 +379,6 @@ export const NarrationEditor: React.FC<NarrationEditorProps> = ({
           {isPreview ? <Eye size={15} /> : <Code2 size={15} />}
           <span>{isPreview ? 'Vista Markdown' : 'Editar Markdown'}</span>
         </button>
-
-        <div className="editor-legend">
-          <span className="legend-amber-box" />
-          <span className="legend-text">Ámbar: omitido en lectura y exportación</span>
-        </div>
       </div>
     </section>
   );

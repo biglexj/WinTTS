@@ -1,12 +1,12 @@
-# Plan — WinTTS v2.1.0 “Nugget Update”
+# Plan — WinTTS v2.0.0 “Nougat & Nugget Update”
 
 > Objetivo: cerrar las promesas a medias que el análisis del 2026-10-21 destapo en la app, sin
 > añadir alcance nuevo ni romper la promesa de 100% offline.
 
 ## Contexto
 
-WinTTS v2.0.0 (Rust + Tauri 2.0) cumplia su objetivo de leer texto en voz alta, pero dejaba tres
-cables sueltos:
+La app WinTTS Rust + Tauri 2.0 (la que se iba a publicar como v2.0.0) cumplia su objetivo de leer texto
+en voz alta, pero dejaba tres cables sueltos:
 
 1. **El motor de voces neuronales era decorativo.** El catalogo mostraba modelos Piper, la descarga
    se simulaba con un `setTimeout`, la lectura seguia usando el motor del WebView (que nunca encuentra

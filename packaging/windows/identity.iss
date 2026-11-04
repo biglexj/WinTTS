@@ -1,4 +1,4 @@
-; ============================================================================
+﻿; ============================================================================
 ; identity.iss - Configuracion por aplicacion de WinTTS.
 ; ---------------------------------------------------------------------------
 ; MyAppId debe permanecer estable entre versiones: es lo que hace que una
@@ -35,4 +35,8 @@
 ; Tema automatico: oscuro o claro segun la configuracion de Windows.
 #ifndef MyAppTheme
   #define MyAppTheme "dynamic"
+#endif
+
+#ifndef MyAppSubtitle
+  #define MyAppSubtitle "Dale voz a tus textos, en tu equipo."
 #endif

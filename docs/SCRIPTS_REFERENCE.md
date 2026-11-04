@@ -2,14 +2,24 @@
 
 ## scripts/build-release.ps1
 
-Flujo integral para una versión pública. Compila el frontend y backend en Release, ejecuta pruebas de Rust, crea el ejecutable portable y el paquete MSIX para Windows Store, y genera los hashes SHA-256 en la carpeta `release/`.
+Flujo integral de empaquetado local. Compila el frontend y backend en Release, ejecuta pruebas de Rust, crea el ejecutable portable y el paquete MSIX para Windows Store, y genera los hashes SHA-256 en la carpeta `release/`.
 
 ```powershell
 .\scripts\build-release.ps1 -Version 2.0.0
 .\scripts\build-release.ps1 -Version 2.0.0 -SkipTests
 ```
 
-`-LocalOnly` omite Git y GitHub. `-SkipBuild` reutiliza exclusivamente `publish/exe/WinTTS.exe`, útil después de un ensayo local exitoso.
+**No publica nada**: no crea commit, ni tag, ni GitHub Release, ni empuja a
+GitHub. Solo deja artefactos y hashes en `release/`. La publicación la decide
+Biglex a mano (ver `docs/PUBLISHING.md`).
+
+El instalador de Windows con Inno Setup se genera aparte, porque `build-release.ps1`
+no lo incluye:
+
+```powershell
+.\scripts\packaging\Build-Installer.ps1
+```
+
 1. [Introducción](#introducción)
 2. [Scripts para MSIX](#scripts-para-msix)
 3. [Scripts para EXE Portable](#scripts-para-exe-portable)
@@ -36,14 +46,17 @@ Todos los scripts están en la carpeta `scripts/`:
 
 ```
 scripts/
-├── generate-assets.ps1      # Genera imágenes PNG para MSIX
-├── build-msix.ps1           # Compila y empaqueta MSIX
-├── sign-package.ps1         # Firma el paquete MSIX
-├── install-dev-cert.ps1     # Instala certificado de desarrollo
-├── create-and-sign.ps1      # Todo-en-uno para MSIX
-├── build-exe.ps1            # Genera ejecutable portable
-└── add-sdk-to-path.ps1      # Configura PATH del SDK
+├── build-release.ps1        # Flujo local: pruebas + EXE portable + MSIX
+├── build-exe.ps1            # Genera el ejecutable portable
+├── build-msix.ps1           # Compila y empaqueta el MSIX
+└── packaging/
+    └── Build-Installer.ps1  # Instalador de Windows con Inno Setup
 ```
+
+> Las secciones que siguen describen un conjunto de scripts anterior
+> (`generate-assets.ps1`, `sign-package.ps1`, `create-and-sign.ps1`,
+> `install-dev-cert.ps1`, `add-sdk-to-path.ps1`) que ya **no existen** en el
+> repositorio: pertenecían al flujo C#/.NET archivado en `archivado/`.
 
 ---
 

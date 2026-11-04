@@ -19,7 +19,7 @@ Moniker: wintts
 Agreements:
   - AgreementLabel: wintts
   - AgreementLabel: tts
-ReleaseNotes: WinTTS 2.0 con instalador propio de Windows (Inno Setup) en español, instalación por usuario sin elevación, interfaz de entrada única y diseño moderno claro/oscuro automático.
+ReleaseNotes: WinTTS 2.0 reescrito en Rust + Tauri 2.0 con React 19, motor de voz neural Piper real, guardar y abrir documentos, exportacion WAV corregida e instalador propio de Windows (Inno Setup) en español, con instalacion por usuario sin elevacion, interfaz de entrada unica y diseno moderno claro/oscuro automatico.
 ReleaseNotesUrl: https://github.com/biglexj/WinTTS/blob/main/RELEASE_NOTES.md
 InstallationNotes: |
   ✨ Instalación por usuario: no requiere permisos de administrador.

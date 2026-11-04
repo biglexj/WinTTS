@@ -1,11 +1,17 @@
 import { useState, useCallback, useEffect, useMemo, useRef } from 'react';
 import { appDataDir } from '@tauri-apps/api/path';
 import type { AppSettings, PiperCatalogModel, PiperInstalledModel } from '../types';
-import { piperConfigUrl, piperModelUrl } from '../types';
+import { PIPER_ENGINE_SIZE_MB, piperConfigUrl, piperModelUrl } from '../types';
 import { tauriBridge, isTauri } from '../services/tauriBridge';
 
 export interface PiperDownloadState {
   modelId: string;
+  downloaded: number;
+  total: number;
+}
+
+/** Progreso de la descarga del motor de Piper. */
+export interface PiperEngineInstallState {
   downloaded: number;
   total: number;
 }
@@ -20,10 +26,19 @@ export type PiperController = ReturnType<typeof usePiper>;
 export function usePiper(settings: AppSettings) {
   const [installed, setInstalled] = useState<PiperInstalledModel[]>([]);
   const [engineReady, setEngineReady] = useState<boolean>(false);
+  const [loading, setLoading] = useState<boolean>(true);
   const [modelsDir, setModelsDir] = useState<string>(settings.piperModelsDir);
   const [download, setDownload] = useState<PiperDownloadState | null>(null);
+  const [engineInstall, setEngineInstall] = useState<PiperEngineInstallState | null>(null);
   const [error, setError] = useState<string | null>(null);
   const unlistenRef = useRef<(() => void) | null>(null);
+  const engineUnlistenRef = useRef<(() => void) | null>(null);
+  const requestIdRef = useRef(0);
+  // Ruta vigente del motor. Un refresco lanzado desde un cierre antiguo (por
+  // ejemplo, la descarga que arranca justo despues de instalar el motor) debe
+  // consultar la ruta de ahora, no la que se capturo al crearse.
+  const binaryPathRef = useRef(settings.piperBinaryPath);
+  binaryPathRef.current = settings.piperBinaryPath;
 
   // Carpeta efectiva de modelos: si la configurada trae variables de entorno
   // sin expandir, se resuelve contra el directorio de datos de la app.
@@ -59,13 +74,28 @@ export function usePiper(settings: AppSettings) {
   }, [settings.piperModelsDir]);
 
   const refresh = useCallback(async () => {
-    const [modelList, ready] = await Promise.all([
-      tauriBridge.listPiperModels(modelsDir),
-      tauriBridge.piperEngineAvailable(settings.piperBinaryPath),
-    ]);
-    setInstalled(modelList);
-    setEngineReady(ready);
-    return modelList;
+    const requestId = ++requestIdRef.current;
+
+    try {
+      const [modelList, ready] = await Promise.all([
+        tauriBridge.listPiperModels(modelsDir),
+        tauriBridge.piperEngineAvailable(binaryPathRef.current),
+      ]);
+
+      // Solo la consulta mas reciente puede actualizar el estado. Sin esto, una
+      // respuesta antigua (por ejemplo, la de antes de instalar el motor)
+      // puede llegar la ultima y dejar la interfaz desincronizada.
+      if (requestId === requestIdRef.current) {
+        setInstalled(modelList);
+        setEngineReady(ready);
+      }
+
+      return modelList;
+    } finally {
+      if (requestId === requestIdRef.current) {
+        setLoading(false);
+      }
+    }
   }, [modelsDir, settings.piperBinaryPath]);
 
   useEffect(() => {
@@ -98,6 +128,54 @@ export function usePiper(settings: AppSettings) {
       unlistenRef.current?.();
       unlistenRef.current = null;
     };
+  }, []);
+
+  // Progreso de la descarga del motor de Piper.
+  useEffect(() => {
+    let disposed = false;
+
+    tauriBridge
+      .onPiperEngineProgress((progress) => {
+        if (disposed) return;
+        setEngineInstall((current) =>
+          current
+            ? { ...current, downloaded: progress.downloaded, total: progress.total || current.total }
+            : current
+        );
+      })
+      .then((unlisten) => {
+        if (disposed) {
+          unlisten();
+          return;
+        }
+        engineUnlistenRef.current = unlisten;
+      })
+      .catch(() => {});
+
+    return () => {
+      disposed = true;
+      engineUnlistenRef.current?.();
+      engineUnlistenRef.current = null;
+    };
+  }, []);
+
+  /**
+   * Instala el motor de Piper dentro de la carpeta de datos de la aplicacion.
+   * Devuelve la ruta del `piper.exe` o `null` si no se pudo instalar.
+   */
+  const installEngine = useCallback(async (): Promise<string | null> => {
+    setError(null);
+    setEngineInstall({ downloaded: 0, total: PIPER_ENGINE_SIZE_MB * 1024 * 1024 });
+
+    try {
+      const path = await tauriBridge.installPiperEngine();
+      setEngineInstall(null);
+      return path;
+    } catch (err) {
+      setError(err instanceof Error ? err.message : String(err));
+      setEngineInstall(null);
+      return null;
+    }
   }, []);
 
   const downloadModel = useCallback(
@@ -169,11 +247,14 @@ export function usePiper(settings: AppSettings) {
   return {
     installed,
     engineReady,
+    loading,
     modelsDir,
     download,
+    engineInstall,
     error,
     clearError: () => setError(null),
     refresh,
+    installEngine,
     downloadModel,
     uninstallModel,
     resolveModelPath,

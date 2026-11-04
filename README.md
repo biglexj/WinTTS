@@ -8,7 +8,19 @@ Cuenta con un motor de limpieza inteligente que preprocesa sintaxis Markdown (ne
 
 ## 📸 Interfaz y Diseño
 
-Con una estética oscura inspirada en el lenguaje de diseño de **Aurora**, la aplicación cuenta con una paleta Dark Slate/Teal (`#0F172A`, `#1E293B`, `#2DD4BF`), controles vectoriales de ventana sin marco y barra de estado con indicador LED.
+Con una estética oscura inspirada en el lenguaje de diseño de **Aurora**, la aplicación cuenta con una paleta Dark Slate/Teal (`#0F172A`, `#1E293B`, `#2DD4BF`), controles vectoriales de ventana sin marco y un área de trabajo espaciosa y enfocada.
+
+<div align="center">
+  <img src="docs/screenshots/wintts-main-editor.webp" alt="WinTTS - Editor de narración y controles de lectura" width="94%" />
+</div>
+
+<br/>
+
+<div align="center">
+  <img src="docs/screenshots/wintts-settings-piper.webp" alt="WinTTS - Catálogo de voces neuronales Piper" width="48%" />
+  &nbsp;
+  <img src="docs/screenshots/wintts-settings-preferences.webp" alt="WinTTS - Preferencias y preprocesamiento" width="48%" />
+</div>
 
 ---
 
@@ -67,8 +79,8 @@ WinTTS implementa la interfaz universal de tareas mediante Mise:
 |---|---|
 | `mise dev` | Ejecutar en modo desarrollo (`tauri:dev`). |
 | `mise build` | Compilar frontend y binario de escritorio sin generar instaladores. |
-| `mise release` | Generar instalador oficial Inno Setup en `release/` sin publicar. |
-| `mise publish` | Publicar en GitHub Releases y sincronizar ficha en Aurora (`--plan` y `--check` sin escritura). |
+| `mise release` | Generar instalador oficial Inno Setup (`.exe`) y paquete Microsoft Store (`.msix`) en `release/` sin publicar. |
+| `mise publish` | Publicar en GitHub Releases (instalador `.exe` + paquete `.msix` + `SHA256SUMS.txt`) y sincronizar ficha en Aurora (`--plan` y `--check` sin escritura). |
 
 Opciones de inspección y comprobación:
 - `--plan`: Muestra el comando y las operaciones planificadas sin ejecutar procesos ni modificar el sistema (`mise dev --plan`, `mise release --plan`, `mise publish --plan`).

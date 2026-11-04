@@ -4,17 +4,32 @@ Esta guía explica cómo generar diferentes tipos de paquetes para distribuir Wi
 
 ## Publicación automatizada recomendada
 
-El flujo principal sincroniza la versión, compila, ejecuta pruebas, genera el EXE portable y su SHA-256, valida los manifiestos WinGet y, fuera del modo local, crea el commit, tag y GitHub Release:
+> ⚠️ **Documento en parte heredado.** Las secciones de detalle que siguen
+> describen el flujo anterior en **C#/.NET** (conservado en `archivado/`). Para
+> la app actual (Rust + Tauri 2.0) manda lo que se indica aquí abajo.
+
+El empaquetado actual son **tres scripts locales e independientes**. Ninguno
+publica nada, ninguno hace commit y ninguno empuja a GitHub: solo dejan los
+artefactos y sus hashes en `release/`.
 
 ```powershell
-# Ensayo completo sin modificar Git ni GitHub
+# 1. Pruebas + EXE portable + paquete MSIX (no genera el instalador Inno)
 .\scripts\build-release.ps1 -Version 2.0.0 -SkipTests
 
-# Publicación del binario y paquete MSIX
-.\scripts\build-release.ps1 -Version 2.0.0
+# 2. Instalador de Windows con Inno Setup (artefacto publicado)
+.\scripts\packaging\Build-Installer.ps1
 ```
 
-El segundo comando requiere autenticación activa de Git y GitHub CLI. Los certificados `.pfx` nunca se adjuntan al release.
+El instalador toma la versión de `src-tauri\tauri.conf.json`, empaqueta
+`src-tauri\target\release\wintts.exe` y deja `release\WinTTS-Setup-<version>.exe`.
+Además reescribe `packaging\windows\version.iss` y el hash
+`InstallerSha256` del manifiesto WinGet preparado.
+
+La **publicación en GitHub es manual** y la decide Biglex: commit único de
+release, tag anotado `vX.Y.Z`, `git push --atomic` y `gh release create` con los
+artefactos de `release/` y `SHA256SUMS.txt`. El script heredado que sí creaba
+commit, tag y release vive en `archivado\build-release.ps1` y **no** aplica a la
+app actual. Los certificados `.pfx` nunca se adjuntan al release.
 
 ## 📋 Tabla de Contenidos
 

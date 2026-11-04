@@ -1,6 +1,6 @@
 use crate::models::types::PiperModelFile;
 use crate::services::piper;
-use tauri::AppHandle;
+use tauri::{AppHandle, Manager};
 
 #[tauri::command]
 pub fn list_piper_models(models_dir: String) -> Vec<PiperModelFile> {
@@ -27,6 +27,22 @@ pub async fn download_piper_model(
     dest_path: String,
 ) -> Result<u64, String> {
     piper::download_model(app, &model_id, &url, &dest_path).await
+}
+
+/// Instala el motor de Piper dentro de la carpeta de datos de la aplicacion.
+///
+/// Descarga el binario oficial para Windows, comprueba su hash y lo extrae en
+/// `<datos locales>\runtime\piper`. Devuelve la ruta de `piper.exe`.
+#[tauri::command]
+pub async fn install_piper_engine(app: AppHandle) -> Result<String, String> {
+    let base = app
+        .path()
+        .app_local_data_dir()
+        .map_err(|e| format!("No se pudo localizar la carpeta de datos de la aplicacion: {}", e))?;
+
+    let dest_root = base.join("runtime").join("piper");
+
+    piper::install_engine(app, &dest_root).await
 }
 
 /// Sintetiza texto con Piper. Se ejecuta fuera del hilo de la interfaz para

@@ -23,6 +23,6 @@ InstallerSwitches:
 Installers:
   - Architecture: x64
     InstallerUrl: https://github.com/biglexj/WinTTS/releases/download/v2.0.0/WinTTS-Setup-2.0.0.exe
-    InstallerSha256: 23D65C983A115629A4B39D3B7AA133EDFC5A45FC658257F71F531C972FC3930A
+    InstallerSha256: 98A4744CE5EF20446B36469948991EB689A6317139308F1EED9EF688FA8B387E
 ManifestType: installer
 ManifestVersion: 1.10.0

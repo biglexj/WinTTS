@@ -1,4 +1,5 @@
-import React, { useState, useEffect, useMemo, useRef } from 'react';
+import React, { useState, useEffect, useMemo, useRef, useCallback } from 'react';
+import { createPortal } from 'react-dom';
 import type { AppSettings } from '../../types';
 import { ChevronDown, Check } from 'lucide-react';
 
@@ -17,6 +18,26 @@ export const AudioTab: React.FC<AudioTabProps> = ({ formState, setFormState }) =
   const [isSampleRateOpen, setIsSampleRateOpen] = useState(false);
   const sampleRateTriggerRef = useRef<HTMLButtonElement | null>(null);
   const sampleRateMenuRef = useRef<HTMLDivElement | null>(null);
+  const [menuPosition, setMenuPosition] = useState<React.CSSProperties>({});
+
+  const updateMenuPosition = useCallback(() => {
+    const rect = sampleRateTriggerRef.current?.getBoundingClientRect();
+    if (!rect) return;
+    const below = window.innerHeight - rect.bottom;
+    const above = rect.top;
+    const placeAbove = below < 180 && above > below;
+    setMenuPosition({
+      position: 'fixed',
+      left: rect.left,
+      right: 'auto',
+      width: rect.width,
+      top: placeAbove ? 'auto' : rect.bottom + 5,
+      bottom: placeAbove ? window.innerHeight - rect.top + 5 : 'auto',
+      maxHeight: Math.max(0, (placeAbove ? above : below) - 12),
+      overflowY: 'auto',
+      zIndex: 10000,
+    });
+  }, []);
 
   useEffect(() => {
     if (!isSampleRateOpen) return;
@@ -32,8 +53,14 @@ export const AudioTab: React.FC<AudioTabProps> = ({ formState, setFormState }) =
       }
     };
     document.addEventListener('mousedown', handleOutsideClick);
-    return () => document.removeEventListener('mousedown', handleOutsideClick);
-  }, [isSampleRateOpen]);
+    window.addEventListener('resize', updateMenuPosition);
+    window.addEventListener('scroll', updateMenuPosition, true);
+    return () => {
+      document.removeEventListener('mousedown', handleOutsideClick);
+      window.removeEventListener('resize', updateMenuPosition);
+      window.removeEventListener('scroll', updateMenuPosition, true);
+    };
+  }, [isSampleRateOpen, updateMenuPosition]);
 
   const currentSampleRate = useMemo(() => {
     return (
@@ -45,14 +72,17 @@ export const AudioTab: React.FC<AudioTabProps> = ({ formState, setFormState }) =
   return (
     <div className="tab-content animate-fade">
       <div className="setting-group">
-        <label className="setting-label">Frecuencia de Muestreo de Exportación (Hz)</label>
-        <div className="setting-desc">Calidad y frecuencia de muestreo para la síntesis y exportación de audio.</div>
+        <label className="setting-label">Frecuencia de muestreo</label>
         <div className="custom-select-wrapper">
           <button
             ref={sampleRateTriggerRef}
             type="button"
             className={`custom-select-trigger ${isSampleRateOpen ? 'trigger-focused' : ''}`}
-            onClick={() => setIsSampleRateOpen(!isSampleRateOpen)}
+            onClick={() => {
+              updateMenuPosition();
+              setIsSampleRateOpen(!isSampleRateOpen);
+            }}
+            aria-label="Frecuencia de muestreo"
             aria-haspopup="listbox"
             aria-expanded={isSampleRateOpen}
           >
@@ -63,8 +93,8 @@ export const AudioTab: React.FC<AudioTabProps> = ({ formState, setFormState }) =
             />
           </button>
 
-          {isSampleRateOpen && (
-            <div ref={sampleRateMenuRef} className="custom-select-menu animate-dropdown" role="listbox">
+          {isSampleRateOpen && createPortal(
+            <div ref={sampleRateMenuRef} className="custom-select-menu animate-dropdown" role="listbox" aria-label="Frecuencia de muestreo" style={menuPosition}>
               {SAMPLE_RATE_OPTIONS.map((opt) => {
                 const isSelected = opt.value === formState.sampleRate;
                 return (
@@ -87,14 +117,14 @@ export const AudioTab: React.FC<AudioTabProps> = ({ formState, setFormState }) =
                   </button>
                 );
               })}
-            </div>
+            </div>,
+            document.body
           )}
         </div>
       </div>
 
       <div className="setting-group">
-        <label className="setting-label">Prefijo de Nombre para Archivos de Audio</label>
-        <div className="setting-desc">Texto inicial con el que se generarán los nombres de los archivos exportados.</div>
+        <label className="setting-label">Prefijo de los archivos de audio</label>
         <input
           type="text"
           className="setting-input"

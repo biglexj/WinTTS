@@ -32,6 +32,12 @@ export interface PiperDownloadProgress {
   total: number;
 }
 
+/** Progreso de la descarga del motor de Piper. */
+export interface PiperEngineProgress {
+  downloaded: number;
+  total: number;
+}
+
 /** Forma real del evento emitido por el backend (snake_case). */
 interface PiperDownloadEvent {
   model_id: string;
@@ -41,7 +47,11 @@ interface PiperDownloadEvent {
 
 export const tauriBridge = {
   // Voice Listing
-  async getVoices(enablePiper: boolean = true, installedPiperIds?: string[]): Promise<SystemVoice[]> {
+  /**
+   * Voces disponibles. Las voces neuronales solo se ofrecen cuando el motor
+   * de Piper esta instalado: sin motor no se pueden sintetizar.
+   */
+  async getVoices(piperEngineReady: boolean = false, installedPiperIds?: string[]): Promise<SystemVoice[]> {
     let systemVoices: SystemVoice[] = [];
 
     if (!isTauri()) {
@@ -76,7 +86,7 @@ export const tauriBridge = {
       }
     }
 
-    if (!enablePiper) {
+    if (!piperEngineReady) {
       return systemVoices;
     }
 
@@ -242,6 +252,28 @@ export const tauriBridge = {
     const unlisten = await listen<PiperDownloadEvent>('piper://download-progress', (event) => {
       handler({
         modelId: event.payload.model_id,
+        downloaded: event.payload.downloaded,
+        total: event.payload.total,
+      });
+    });
+    return unlisten;
+  },
+
+  /**
+   * Instala el motor de Piper dentro de la carpeta de datos de la aplicacion.
+   * Devuelve la ruta del `piper.exe` instalado.
+   */
+  async installPiperEngine(): Promise<string> {
+    return await invoke<string>('install_piper_engine');
+  },
+
+  /** Progreso de la descarga del motor de Piper. */
+  async onPiperEngineProgress(
+    handler: (progress: PiperEngineProgress) => void
+  ): Promise<() => void> {
+    if (!isTauri()) return () => {};
+    const unlisten = await listen<PiperEngineProgress>('piper://engine-download-progress', (event) => {
+      handler({
         downloaded: event.payload.downloaded,
         total: event.payload.total,
       });

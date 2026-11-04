@@ -1,4 +1,4 @@
-# Tareas — WinTTS v2.1.0 “Nugget Update”
+# Tareas — WinTTS v2.0.0 “Nougat & Nugget Update”
 
 ## Backend (Rust)
 
@@ -31,5 +31,5 @@
 ## Documentacion
 
 - [x] `README.md`: capacidades reales, atajos y seccion del motor neural.
-- [x] `RELEASE_NOTES.md`: entrada `2.1.0`.
+- [x] `RELEASE_NOTES.md`: entrada `2.0.0`.
 - [x] `ROADMAP.md`: pendientes reorganizados y completados marcados.

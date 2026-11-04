@@ -78,7 +78,7 @@ export function useSpeech(piper: PiperRuntime) {
 
       if (!piper.engineReady) {
         throw new Error(
-          'El motor Piper no está configurado. Indica la ruta de piper.exe en Ajustes → Voces neuronales.'
+          'El motor Piper no está instalado. Instálalo en Ajustes → Motor Piper TTS o indica la ruta de piper.exe.'
         );
       }
       if (!modelPath) {

@@ -1,4 +1,4 @@
-# Validación — WinTTS v2.1.0 “Nugget Update”
+# Validación — WinTTS v2.0.0 “Nougat & Nugget Update”
 
 ## Pruebas automaticas
 

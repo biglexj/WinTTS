@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { getCurrentWindow } from '@tauri-apps/api/window';
 import { tauriBridge, isTauri } from '../../services/tauriBridge';
 import { Settings, Info } from 'lucide-react';
+import appIcon from '../../../assets/branding/icons/icon-transparent.png';
 import './TitleBar.css';
 
 interface TitleBarProps {
@@ -80,7 +81,7 @@ export const TitleBar: React.FC<TitleBarProps> = ({ onOpenSettings, onOpenAbout 
       data-tauri-drag-region
     >
       <div className="titlebar-branding" data-tauri-drag-region>
-        <img src="/Image/app_icon.ico" alt="WinTTS Logo" className="titlebar-icon" />
+        <img src={appIcon} alt="WinTTS Logo" className="titlebar-icon" />
         <span className="titlebar-title">WinTTS</span>
         <span className="titlebar-subtitle"> · Local Speech & Neural Reader</span>
       </div>

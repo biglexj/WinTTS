@@ -1,6 +1,6 @@
 import React from 'react';
 import type { AppSettings, SystemVoice } from '../../types';
-import { Mic, Check } from 'lucide-react';
+import { Check } from 'lucide-react';
 
 interface SystemVoicesTabProps {
   formState: AppSettings;
@@ -66,22 +66,17 @@ export const SystemVoicesTab: React.FC<SystemVoicesTabProps> = ({
 
   return (
     <div className="tab-content animate-fade">
-      <div className="info-banner">
-        <Mic size={18} className="info-banner-icon" />
-        <p>
-          <strong>Voces del Sistema (OneCore / SAPI / Navegador):</strong> Elige qué idiomas deseas habilitar en el selector de voz del sistema. Puedes añadir más voces desde la configuración de voz de Windows.
-        </p>
-      </div>
+      <p className="setting-desc">Elige los idiomas que aparecerán en el selector de voz.</p>
 
       {/* Opción Mostrar Todos */}
       <div className="setting-row-toggle">
         <div>
-          <div className="setting-label">Mostrar todos los idiomas instalados</div>
-          <div className="setting-desc">Habilita cualquier voz instalada en Windows sin restringir por idioma.</div>
+          <div className="setting-label">Mostrar todos los idiomas</div>
         </div>
         <input
           type="checkbox"
           className="setting-checkbox"
+          aria-label="Mostrar todos los idiomas"
           checked={isAll}
           onChange={() => handleToggleLanguage('all')}
         />
@@ -91,19 +86,20 @@ export const SystemVoicesTab: React.FC<SystemVoicesTabProps> = ({
       {!isAll && (
         <div className="setting-group">
           <div className="label-with-action">
-            <label className="setting-label">Idiomas Habilitados en el Selector</label>
+            <label className="setting-label">Idiomas visibles</label>
             <span className="setting-desc" style={{ margin: 0 }}>
-              {matchedVoices.length} voz(ces) coincidente(s)
+              {matchedVoices.length} {matchedVoices.length === 1 ? 'voz' : 'voces'}
             </span>
           </div>
 
-          <div className="languages-grid" style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(220px, 1fr))', gap: '8px', marginTop: '4px' }}>
+          <div className="languages-grid">
             {LANGUAGE_OPTIONS.map((lang) => {
               const isChecked = currentLanguages.includes(lang.code);
               return (
                 <button
                   key={lang.code}
                   type="button"
+                  aria-pressed={isChecked}
                   onClick={() => handleToggleLanguage(lang.code)}
                   style={{
                     display: 'flex',

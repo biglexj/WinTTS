@@ -58,7 +58,7 @@ export const VoiceSelector: React.FC<VoiceSelectorProps> = ({
     setCoords({
       top: placeUp ? rect.top - 6 : rect.bottom + 6,
       left: rect.left,
-      width: Math.max(rect.width, 300),
+      width: rect.width,
       placeUp,
     });
   }, []);

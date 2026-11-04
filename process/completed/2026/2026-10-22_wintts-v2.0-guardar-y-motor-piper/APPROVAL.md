@@ -1,9 +1,10 @@
-# Aprobación — WinTTS v2.1.0 “Nugget Update”
+# Aprobación — WinTTS v2.0.0 “Nougat & Nugget Update”
 
 ## Origen
 
-El 2026-10-21, tras el analisis de la app v2.0.0, Biglex pidio explicitamente **“implementa”** sobre
-la lista de hallazgos priorizados. Ese mensaje es la aprobacion de ejecucion de este alcance.
+El 2026-10-21, tras el analisis de la app Rust+Tauri que se iba a publicar como v2.0.0, Biglex pidio
+explicitamente **“implementa”** sobre la lista de hallazgos priorizados. Ese mensaje es la aprobacion de
+ejecucion de este alcance.
 
 ## Alcance aprobado
 
@@ -23,7 +24,7 @@ capitulos y atajos globales.
 |---|---|
 | Descarga de pesos en Rust con `reqwest` en vez del plugin HTTP del frontend | Evita serializar decenas de MB por IPC y permite progreso real por evento. |
 | Verificacion de modelos por archivo en disco, no por lista en `localStorage` | La UI debe reflejar lo que existe de verdad. |
-| Sin motor configurado, la app **no** recurre en silencio a la voz del sistema | Es el mismo criterio que se le critico a la v2.0.0. |
+| Sin motor configurado, la app **no** recurre en silencio a la voz del sistema | Es el mismo criterio que se le critico a la app Rust+Tauri antes de publicarla. |
 | Sin troceado defensivo del texto | Se midio que el corte de 15 s de Chromium no se reproduce en el motor actual. |
 | Se corrigio el catalogo de Piper contra la API de Hugging Face | El catalogo anterior tinha entradas inexistentes y tamanos erroneos. |
 | `debug = 0` en el perfil dev | Necesario para que el backend compile en esta maquina (toolchain `gnullvm`). |

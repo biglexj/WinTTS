@@ -5,8 +5,8 @@ pub mod services;
 use commands::export::{export_audio, export_audio_file, export_wav};
 use commands::file_ops::{read_text_file, save_text_file};
 use commands::piper::{
-    download_piper_model, list_piper_models, piper_engine_available, remove_piper_model,
-    synthesize_with_piper,
+    download_piper_model, install_piper_engine, list_piper_models, piper_engine_available,
+    remove_piper_model, synthesize_with_piper,
 };
 use commands::speech::{get_available_voices, get_document_stats, preprocess_text};
 
@@ -37,6 +37,7 @@ pub fn run() {
             list_piper_models,
             piper_engine_available,
             download_piper_model,
+            install_piper_engine,
             remove_piper_model,
             synthesize_with_piper
         ])

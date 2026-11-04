@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import type { AppSettings, SystemVoice } from '../../types';
 import type { PiperController } from '../../hooks/usePiper';
-import { Settings, X, Brain, Mic, Volume2, FileCode, Check } from 'lucide-react';
+import { Settings, X, Brain, Mic, SlidersHorizontal, Check } from 'lucide-react';
 import { PiperTab } from './PiperTab';
 import { SystemVoicesTab } from './SystemVoicesTab';
 import { AudioTab } from './AudioTab';
@@ -26,7 +26,7 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
   piper,
 }) => {
   const [formState, setFormState] = useState<AppSettings>(settings);
-  const [activeTab, setActiveTab] = useState<'piper' | 'system' | 'audio' | 'markdown'>('piper');
+  const [activeTab, setActiveTab] = useState<'piper' | 'system' | 'preferences'>('preferences');
   const [saveSuccess, setSaveSuccess] = useState(false);
 
   const systemVoicesOnly = React.useMemo(() => {
@@ -60,7 +60,7 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
 
   return (
     <div className="modal-backdrop" onClick={onClose} role="dialog" aria-modal="true">
-      <div className="modal-container" onClick={(e) => e.stopPropagation()}>
+      <div className="modal-container settings-modal" onClick={(e) => e.stopPropagation()}>
         {/* Header */}
         <div className="modal-header">
           <div className="modal-header-info">
@@ -69,7 +69,6 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
             </div>
             <div>
               <h2 className="modal-title">Configuración</h2>
-              <p className="modal-subtitle">Gestión de Piper TTS, voces del sistema, audio y preferencias</p>
             </div>
           </div>
           <button className="modal-close-btn" onClick={onClose} title="Cerrar (Esc)">
@@ -80,32 +79,25 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
         {/* Tab Navigation */}
         <div className="modal-tabs">
           <button
-            className={`modal-tab-btn ${activeTab === 'piper' ? 'tab-active' : ''}`}
-            onClick={() => setActiveTab('piper')}
+            className={`modal-tab-btn ${activeTab === 'preferences' ? 'tab-active' : ''}`}
+            onClick={() => setActiveTab('preferences')}
           >
-            <Brain size={15} />
-            <span>Motor Piper TTS</span>
+            <SlidersHorizontal size={15} />
+            <span>Preferencias</span>
           </button>
           <button
             className={`modal-tab-btn ${activeTab === 'system' ? 'tab-active' : ''}`}
             onClick={() => setActiveTab('system')}
           >
             <Mic size={15} />
-            <span>Voces del Sistema</span>
+            <span>Voces del sistema</span>
           </button>
           <button
-            className={`modal-tab-btn ${activeTab === 'audio' ? 'tab-active' : ''}`}
-            onClick={() => setActiveTab('audio')}
+            className={`modal-tab-btn ${activeTab === 'piper' ? 'tab-active' : ''}`}
+            onClick={() => setActiveTab('piper')}
           >
-            <Volume2 size={15} />
-            <span>Audio & Exportación</span>
-          </button>
-          <button
-            className={`modal-tab-btn ${activeTab === 'markdown' ? 'tab-active' : ''}`}
-            onClick={() => setActiveTab('markdown')}
-          >
-            <FileCode size={15} />
-            <span>Preprocesador</span>
+            <Brain size={15} />
+            <span>Piper</span>
           </button>
         </div>
 
@@ -129,12 +121,17 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
             />
           )}
 
-          {activeTab === 'audio' && (
-            <AudioTab formState={formState} setFormState={setFormState} />
-          )}
-
-          {activeTab === 'markdown' && (
-            <MarkdownTab formState={formState} setFormState={setFormState} />
+          {activeTab === 'preferences' && (
+            <div className="settings-columns preferences-layout">
+              <section className="settings-column" aria-labelledby="audio-preferences-title">
+                <h3 id="audio-preferences-title" className="settings-section-title">Audio y exportación</h3>
+                <AudioTab formState={formState} setFormState={setFormState} />
+              </section>
+              <section className="settings-column" aria-labelledby="text-preferences-title">
+                <h3 id="text-preferences-title" className="settings-section-title">Lectura del texto</h3>
+                <MarkdownTab formState={formState} setFormState={setFormState} />
+              </section>
+            </div>
           )}
         </div>
 
@@ -145,7 +142,7 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
           </button>
           <button className="btn-primary modal-save-btn" onClick={handleSave}>
             {saveSuccess ? <Check size={16} /> : <Settings size={16} />}
-            <span>{saveSuccess ? '¡Guardado!' : 'Guardar Configuración'}</span>
+            <span>{saveSuccess ? 'Guardado' : 'Guardar'}</span>
           </button>
         </div>
       </div>

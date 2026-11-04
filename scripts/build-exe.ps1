@@ -57,14 +57,15 @@ $hash = (Get-FileHash -LiteralPath $destExe -Algorithm SHA256).Hash.ToLowerInvar
 $hashLine = "$hash  $artifactName"
 $hashPath = Join-Path $releaseDir "SHA256SUMS.txt"
 
-# Actualizar o anexar hash
+# Actualizar o anexar hash. Se escribe con saltos LF y sin BOM: el formato
+# `sha256sum` usa LF, y con CRLF la verificacion falla en Linux y macOS.
+$existing = @()
 if (Test-Path -LiteralPath $hashPath) {
     $existing = Get-Content -LiteralPath $hashPath | Where-Object { $_ -notmatch [regex]::Escape($artifactName) }
-    $updated = @($existing; $hashLine)
-    Set-Content -LiteralPath $hashPath -Value $updated -Encoding utf8
-} else {
-    Set-Content -LiteralPath $hashPath -Value $hashLine -Encoding utf8
 }
+$updated = @($existing; $hashLine)
+$utf8NoBom = New-Object System.Text.UTF8Encoding($false)
+[System.IO.File]::WriteAllText($hashPath, (($updated -join "`n") + "`n"), $utf8NoBom)
 
 $fileSizeMB = [math]::Round((Get-Item $destExe).Length / 1MB, 2)
 

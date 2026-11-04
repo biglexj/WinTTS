@@ -60,6 +60,12 @@ export interface PiperInstalledModel {
 /** Base de descarga de los pesos neuronales de Piper. */
 export const PIPER_BASE_URL = 'https://huggingface.co/rhasspy/piper-voices/resolve/main/';
 
+/** Modelo que se descarga al instalar el motor, para poder usarlo enseguida. */
+export const DEFAULT_PIPER_MODEL_ID = 'es_AR-daniela-high';
+
+/** Tamano del motor de Piper para Windows que instala la aplicacion. */
+export const PIPER_ENGINE_SIZE_MB = 22;
+
 /** URL directa del peso `.onnx` de un modelo del catalogo. */
 export const piperModelUrl = (model: PiperCatalogModel) =>
   `${PIPER_BASE_URL}${model.modelPath}/${model.id}.onnx`;
@@ -288,7 +294,6 @@ export const PIPER_POPULAR_MODELS: PiperCatalogModel[] = [
 export interface AppSettings {
   piperBinaryPath: string;
   piperModelsDir: string;
-  enablePiper: boolean;
   installedPiperModels: string[]; // Modelos marcados como instalados (se cruzan con el disco)
   systemVoiceLanguages: string[]; // Idiomas de voces del sistema a mostrar, ej: ['es'] o ['all']
   sampleRate: number;
@@ -300,7 +305,6 @@ export interface AppSettings {
 export const DEFAULT_APP_SETTINGS: AppSettings = {
   piperBinaryPath: '',
   piperModelsDir: '',
-  enablePiper: true,
   installedPiperModels: [],
   systemVoiceLanguages: ['es'],
   sampleRate: 22050,

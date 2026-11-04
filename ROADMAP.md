@@ -31,13 +31,14 @@ Plan de trabajo, objetivos y prioridades del proyecto.
 - [x] Control de reproducción (Reproducir, Pausar, Reanudar, Detener) y sliders de volumen, velocidad y tono.
 - [x] Exportación de narraciones a archivo WAV de alta fidelidad.
 - [x] Interfaz oscura Slate/Teal sin marco con barra de título y estado personalizadas.
-- [x] Versión `2.0.0` “Nougat Update”.
 - [x] **Abrir, Guardar y Guardar como** con atajos `Ctrl+O`, `Ctrl+S` y `Ctrl+Shift+S`, y borrador persistente entre sesiones.
 - [x] **Motor Piper real**: descarga de pesos desde Hugging Face con progreso, verificacion en disco, sintesis con `piper.exe` y reproduccion del WAV generado.
 - [x] **Estado honesto del motor**: la interfaz avisa cuando falta el motor en vez de cambiar de voz en silencio.
+- [x] **Instalación del motor Piper desde la aplicación**: descarga del binario oficial de Windows con verificación de hash, extracción en la carpeta de datos de la app y actualización automática de la ruta configurada.
+- [x] **Voces neuronales ocultas por defecto**: la sección de voz neural solo aparece cuando el motor está operativo; sin motor, la interfaz no muestra avisos porque no falta nada.
 - [x] **Reajuste de las omisiones al editar** el documento.
 - [x] **Persistencia de voz, volumen, velocidad y tono** entre sesiones.
 - [x] **Idioma del audio exportado acorde a la voz elegida** (ya no forzado a `es-PE`).
 - [x] Corrección de la exportación WAV, que fallaba con el tono por defecto (`pitch="0st"` no es SSML válido).
 - [x] Catálogo de Piper contrastado contra el repositorio real de Hugging Face (entradas y tamaños corregidos).
-- [x] Versión `2.1.0` “Nugget Update”.
+- [x] Versión `2.0.0` “Nougat & Nugget Update”.

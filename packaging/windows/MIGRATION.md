@@ -217,40 +217,80 @@ preinstalado. Hoy delega en el runtime preinstalado y lo documenta.
 
 ---
 
-## 8. Defecto conocido: el arranque automatico tras instalar
+## 8. Arranque automatico tras instalar: degradado a proposito
 
-**Sintoma**: al terminar la instalacion, si "Ejecutar WinTTS" esta marcado, la
-app no arranca. Windows muestra el error duro:
+### Que se ve
 
-> wintts.exe - Error de la aplicacion: La aplicacion no se pudo iniciar
-> correctamente (0xc00004bc).
+Al terminar la instalacion **no** se ofrece "Ejecutar WinTTS". La pantalla de
+exito dice:
 
-**No es un problema del empaquetado.** Queda caracterizado con evidencia:
+> WinTTS se instaló correctamente. Abirelo desde el menu Inicio o desde el
+> icono del Escritorio.
+
+Es una decision deliberada: WinTTS **no arranca de forma fiable cuando lo
+lanza el propio instalador**, y dejar una casilla que falla es peor que
+indicar como abrir la app.
+
+### Evidencia
+
+Todos los escenarios se probaron en esta maquina con el mismo binario
+(`%LOCALAPPDATA%\Programs\WinTTS\wintts.exe`, SHA-256 identico al de
+`release\`):
 
 | Escenario | Resultado |
 | --- | --- |
-| Lanzar `wintts.exe` instalado desde una terminal o desde el acceso directo | **Arranca bien** (ventana "WinTTS - Local Speech") |
-| Lanzar el ejecutable portable de `release\` desde una terminal | **Arranca bien** |
-| Lanzar la app desde un `[Run]` de Inno Setup (instalado o portable) | **Falla con 0xc00004bc** |
-| Lanzar la app desde un `[Run]` de un `.iss` minimo y ajeno a este proyecto | **Falla igual** |
-| Lanzar la app desde un `[Run]` de Inno, con el instalador arrancado desde Explorador (padre `explorer.exe`) | **Falla igual** |
+| Lanzado desde una terminal (PowerShell) | **Arranca bien**, ventana "WinTTS - Local Speech" |
+| Lanzado desde el acceso directo del Menu Inicio | **Arranca bien** |
+| Lanzado desde Explorador | **Arranca bien** |
+| Lanzado por el `[Run]` del instalador (`{app}\wintts.exe`) | **Falla**: error duro `0xc00004bc` |
+| Lanzado por el `[Run]` del instalador, indirecto (`cmd /c start`) | **Se cuelga**: el proceso vive con 1 hilo y sin ventana |
+| Lanzado por el `[Run]` de un `.iss` minimo y ajeno a este proyecto | **Falla igual** |
+| Lanzado por el instalador arrancado desde Explorador (padre `explorer.exe`) | **Falla igual** |
 
-Se descartaron como causa: el directorio de trabajo, el entorno (completo y
-correcto en el hijo del instalador), el objeto de trabajo (job) de Windows,
-`ShellExecute` frente a `CreateProcess`, la presencia de `WebView2Loader.dll`
-y la ruta de instalacion. La app falla solo cuando su proceso padre es un
-instalador que sigue vivo.
+En los casos que fallan, el proceso de WinTTS se queda con **un solo hilo y
+cero ventanas**: se atasca durante el arranque de WebView2, antes de crear la
+ventana. En el caso directo, el fallo llega antes como error duro del sistema
+(`Application Popup`, evento 26 del registro `System`).
 
-**Consecuencia practica**: la casilla "Ejecutar WinTTS" de la pantalla de exito
-produce ese error. La app se abre sin problema desde el acceso directo del
-Menu Inicio o del Escritorio, o desde `%LOCALAPPDATA%\Programs\WinTTS\wintts.exe`.
+Se descartaron como causa, comprobandolo: el directorio de trabajo, el
+entorno (el hijo del instalador lo recibe completo: `PATH`, `TEMP`,
+`SystemRoot`, `LOCALAPPDATA`...), el objeto de trabajo (job) de Windows,
+`ShellExecute` frente a `CreateProcess`, la presencia de `WebView2Loader.dll`,
+la ruta de instalacion, el perfil de WebView2 bloqueado por otra instancia
+(el fallo se reproduce igual sin ninguna otra instancia de WinTTS corriendo)
+y el propio motor de Inno Setup.
 
-Como el defecto esta en la aplicacion (arranque de WebView2 al ser lanzada
-desde un instalador) y no en el empaquetado, la decision es de la app:
+Tampoco hay nada en la app que explique el caso: `src-tauri\src` no contiene
+mutex, single-instance ni comprobaciones del proceso padre, y `Cargo.toml` no
+incluye `tauri-plugin-single-instance`. Es un defecto de **arranque de la
+aplicacion**, no del empaquetado.
 
-1. Arreglar el arranque de WinTTS cuando su proceso padre es un instalador
-   (es el mismo camino que usaba el NSIS de Tauri), o
-2. Quitar la entrada `[Run]` de `setup.iss` mientras tanto.
+### Como se restaura
 
-No se ha aplicado ninguna de las dos: el cambio de este trabajo es solo de
-empaquetado.
+En cuanto WinTTS arranque correctamente lanzado por un instalador, se puede
+restaurar la entrada original de la plantilla en `setup.iss`:
+
+```pascal
+[CustomMessages]
+spanish.RunApp=Ejecutar {#MyAppName}
+
+[Run]
+Filename: "{app}\{#MyAppExe}"; Description: "{cm:RunApp}"; Flags: nowait postinstall skipifsilent
+```
+
+y devolver `FinishedLabel` / `FinishedLabelNoIcons` a su texto original
+(`{#MyAppName} se instalo correctamente.`).
+
+### Vias probadas que NO funcionan (para no repetirlas)
+
+1. **Lanzar el acceso directo** (`Filename: "{autoprograms}\{#MyAppName}.lnk"`):
+   Inno ejecuta el `.lnk` con `CreateProcess`, que no sabe lanzar un
+   enlace: no ocurre nada.
+2. **Doble indireccion por shell** (`cmd /c start "" "app"`): el proceso
+   arranca pero se queda colgado sin ventana. Ademas, en Inno cada `""` se
+   convierte en **una** comilla, asi que el titulo vacio de `start` hay que
+   escribirlo con cuatro comillas (`""""`), o el comando queda
+   `start " "app"` y no arranca nada.
+3. **Esperar a que termine el instalador** antes de lanzar
+   (`ping -n 5 127.0.0.1 > nul & start ...`): el proceso arranca igual
+   colgado, sin ventana.

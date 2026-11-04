@@ -7,16 +7,27 @@
 > - Se utiliza SemVer estándar (`MAJOR.MINOR.PATCH`) sin límites artificiales por dígito.
 > - Se incrementa `MAJOR` en hitos de transformación arquitectónica integral con nombre de dulce.
 
-## [2.1.0] — 2026-10-22 — “Nugget Update”
+## [2.0.0] — 2026-10-22 — “Nougat & Nugget Update”
 
 ### Resumen
 
-Cierra las promesas que el catalogo de voces neuronales dejaba abiertas y convierte el editor en una
-herramienta de trabajo: los documentos se abren, se guardan y Piper deja de ser decorativo para ser un
-motor real.
+Reescritura y modernización arquitectónica completa de WinTTS migrando desde WPF/C# hacia una plataforma nativa y multiplataforma basada en **Rust + Tauri 2.0**, **React 19**, **TypeScript** y **Vite**.
+
+Se implementa la capacidad de arrastrar y soltar (Drag & Drop) archivos `.md` y `.txt` directamente sobre la ventana de la aplicación con retroalimentación visual inmediata. El motor de procesamiento en Rust realiza una limpieza instantánea de sintaxis Markdown, emojis y bloques de código, manteniendo la exclusión precisa de fragmentos marcados en ámbar.
+
+La aplicación integra compatibilidad para voces del sistema operativo y una arquitectura preparada para motores neuronales locales como Piper TTS. Se mantiene el diseño visual original con paleta Dark Slate/Teal, controles de velocidad, tono y volumen, modo de vista previa Markdown enriquecida y exportación directa a formato WAV de alta fidelidad.
+
+Sobre esa base, esta entrega cierra las promesas que el catalogo de voces neuronales dejaba abiertas y convierte el editor en una herramienta de trabajo: los documentos se abren, se guardan y Piper deja de ser decorativo para ser un motor real.
+
+El código fuente del stack C#/WPF previo ha sido archivado y resguardado en la carpeta `archivado/`.
 
 ### Añadido
 
+* **Reescritura a Rust + Tauri 2.0** con frontend en **React 19**, **TypeScript** y **Vite**, y el stack C#/WPF previo archivado en `archivado/`.
+* **Arrastrar y soltar (Drag & Drop)** de archivos `.md` y `.txt` sobre la ventana, con overlay visual animado.
+* **Limpieza de Markdown en Rust**: preprocesamiento instantaneo de sintaxis Markdown, emojis y bloques de codigo, conservando la exclusion precisa de los fragmentos marcados en ambar.
+* **Voces del sistema** con selector y arquitectura preparada para motores neuronales locales como Piper TTS, manteniendo la paleta Dark Slate/Teal, los controles de velocidad, tono y volumen y la vista previa Markdown enriquecida.
+* **Exportacion directa a WAV de alta fidelidad** desde la aplicacion.
 * **Guardar, Abrir y Guardar como** (`Ctrl+S`, `Ctrl+O`, `Ctrl+Shift+S`). El comando `save_text_file`
   ya existia en el backend pero ningun codigo del frontend lo invocaba: las ediciones se perdian al
   cerrar la aplicacion.
@@ -25,9 +36,21 @@ motor real.
 * **Motor Piper funcional**: descarga real de los pesos `.onnx` desde Hugging Face con barra de
   progreso, verificacion de lo que hay realmente en disco, sintesis local con `piper.exe` y
   reproduccion del WAV generado. La velocidad se controla con `length_scale`.
-* **Estado honesto del motor**: si falta `piper.exe`, la interfaz lo dice (pildora “SIN MOTOR” y aviso
-  en la barra lateral) y la aplicacion **no** cambia de voz en silencio.
+* **El motor deja de molestar cuando no se usa**: si falta `piper.exe`, la aplicacion no cambia de voz en
+  silencio y no muestra avisos en la barra lateral: la seccion neural simplemente no existe todavia.
+* **Instalacion del motor Piper desde la propia aplicacion**: el campo de ruta de `piper.exe` ya no es un
+  callejon sin salida. El boton **Instalar Piper** descarga el binario oficial de Windows (22 MB), verifica
+  su SHA-256 contra el del build publicado, lo extrae en `%LOCALAPPDATA%\com.biglexj.wintts\runtime\piper`
+  y **actualiza la configuracion con la ruta resultante**. Despues se descarga la voz por defecto
+  (`es_ES-carlfm-x_low`) para que el motor pueda usarse de inmediato. El ejecutable oficial acepta
+  `--model`, `--output_file` y `--length_scale`: son exactamente los argumentos que ya enviava el backend.
+* **Las voces neuronales ya no aparecen por defecto**: la seccion “VOZ PIPER (NEURAL)”, su desplegable y
+  la insignia de Acerca de solo se muestran cuando el motor esta instalado. En una instalacion limpia la
+  barra lateral enseña solo las voces del sistema, sin avisos: las voces neuronales son opcionales y su
+  ausencia no es un problema. En consecuencia, las voces Piper solo se ofrecen en el selector cuando hay
+  un motor que pueda sintetizarlas.
 * **Persistencia de la configuracion de voz**: voz, volumen, velocidad y tono se guardan entre sesiones.
+* **Instalador de Windows modernizado (Inno Setup)**: El instalador EXE de Windows se genera ahora con la plantilla propia de Biglex en Inno Setup, con una pantalla unica de entrada (presentacion, ruta editable y boton principal), progreso y exito nativos, tema claro/oscuro automatico segun Windows, esquinas nativas de Windows 11 e icono centrado. La instalacion es por usuario y sin elevacion, la actualizacion se aplica en el mismo directorio sin instalar en paralelo, y la coexistencia con el instalador anterior (NSIS) queda documentada.
 
 ### Corregido
 
@@ -48,22 +71,10 @@ motor real.
 
 ### Verificacion
 
-* 10 pruebas unitarias en Rust (antes 1), incluyendo el ciclo completo de Piper con un ejecutable
+* 14 pruebas unitarias en Rust (antes 1), incluyendo el ciclo completo de Piper con un ejecutable
   simulado y la descarga real de un peso desde Hugging Face.
-* `tsc && vite build` sin errores; `cargo test --lib` en verde.
+* `tsc && vite build` sin errores; `cargo test --lib` en verde (bundle 293 kB, gzip 88 kB).
 * Flujo de guardado verificado sobre la aplicacion en ejecucion (escritura y relectura reales).
-
-## [2.0.0] — 2026-08-31 — “Nougat Update”
-
-### Resumen
-
-Reescritura y modernización arquitectónica completa de WinTTS migrando desde WPF/C# hacia una plataforma nativa y multiplataforma basada en **Rust + Tauri 2.0**, **React 19**, **TypeScript** y **Vite**.
-
-Se implementa la capacidad de arrastrar y soltar (Drag & Drop) archivos `.md` y `.txt` directamente sobre la ventana de la aplicación con retroalimentación visual inmediata. El motor de procesamiento en Rust realiza una limpieza instantánea de sintaxis Markdown, emojis y bloques de código, manteniendo la exclusión precisa de fragmentos marcados en ámbar.
-
-La aplicación integra compatibilidad para voces del sistema operativo y una arquitectura preparada para motores neuronales locales como Piper TTS. Se mantiene el diseño visual original con paleta Dark Slate/Teal, controles de velocidad, tono y volumen, modo de vista previa Markdown enriquecida y exportación directa a formato WAV de alta fidelidad.
-
-El código fuente del stack C#/WPF previo ha sido archivado y resguardado en la carpeta `archivado/`.
 
 ## [1.0.1] — 2026-07-16
 

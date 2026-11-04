@@ -1,5 +1,6 @@
 # Script Maestro de Publicación y Empaquetado — WinTTS (Rust + Tauri 2.0).
-# Genera Ejecutable Portable (.exe), Paquete de Windows Store (.msix) y Hashes SHA-256.
+# Genera Instalador Oficial Inno Setup (.exe), Paquete de Microsoft Store (.msix),
+# Hashes SHA-256 (SHA256SUMS.txt), Metadatos (BUILD_INFO.json) y Manifiestos WinGet.
 # Autor: biglexj (2026)
 
 [CmdletBinding()]
@@ -7,18 +8,20 @@ param(
     [string]$Version = "2.0.0",
     [string]$CertificatePath,
     [string]$CertificatePassword,
-    [switch]$SkipTests = $false
+    [switch]$SkipTests = $false,
+    [switch]$SkipBuild = $false
 )
 
 $ErrorActionPreference = "Stop"
 $projectRoot = Split-Path -Parent $PSScriptRoot
 $releaseDir = Join-Path $projectRoot "release"
+$buildInstallerScript = Join-Path $PSScriptRoot "packaging\Build-Installer.ps1"
 $buildMsixScript = Join-Path $PSScriptRoot "build-msix.ps1"
-$buildExeScript = Join-Path $PSScriptRoot "build-exe.ps1"
 
 Write-Host "==================================================" -ForegroundColor Cyan
 Write-Host "  🚀 WinTTS v$Version — Flujo Completo de Release" -ForegroundColor Cyan
 Write-Host "  Plataforma: Rust + Tauri 2.0 / Windows x64" -ForegroundColor Cyan
+Write-Host "  Canales: Inno Setup (.exe) + Microsoft Store (.msix)" -ForegroundColor Cyan
 Write-Host "==================================================" -ForegroundColor Cyan
 Write-Host ""
 
@@ -37,36 +40,26 @@ if (-not $SkipTests) {
     Write-Host "[1/4] Pruebas omitidas (-SkipTests activo)." -ForegroundColor Gray
 }
 
-# 2. Compilar Frontend y Backend Release
+# 2. Generar Instalador Oficial Inno Setup (.exe)
 Write-Host ""
-Write-Host "[2/4] Compilando Frontend y Backend Release..." -ForegroundColor Yellow
-Push-Location $projectRoot
-try {
-    npm run build
-    if ($LASTEXITCODE -ne 0) { throw "npm run build falló." }
-} finally {
-    Pop-Location
+Write-Host "[2/4] Generando Instalador Oficial de Windows (Inno Setup)..." -ForegroundColor Yellow
+$installerParams = @{
+    Version = $Version
+}
+if ($SkipBuild) {
+    $installerParams["SkipAppBuild"] = $true
+}
+& $buildInstallerScript @installerParams
+if ($LASTEXITCODE -ne 0) {
+    throw "Falló la generación del instalador Inno Setup."
 }
 
-Push-Location (Join-Path $projectRoot "src-tauri")
-try {
-    cargo build --release
-    if ($LASTEXITCODE -ne 0) { throw "cargo build --release falló." }
-} finally {
-    Pop-Location
-}
-
-# 3. Generar Ejecutable Portable
+# 3. Generar Paquete MSIX para Microsoft Store (.msix)
 Write-Host ""
-Write-Host "[3/4] Generando Ejecutable Portable..." -ForegroundColor Yellow
-& $buildExeScript -Version $Version -SkipBuild
-
-# 4. Generar Paquete MSIX
-Write-Host ""
-Write-Host "[4/4] Generando Paquete MSIX para Microsoft Store..." -ForegroundColor Yellow
+Write-Host "[3/4] Generando Paquete MSIX para Microsoft Store..." -ForegroundColor Yellow
 $msixParams = @{
     Version = $Version
-    SkipBuild = $true
+    SkipBuild = $true # Reutiliza el binario ya compilado en target\release
 }
 if ($CertificatePath) {
     $msixParams["CertificatePath"] = $CertificatePath
@@ -75,6 +68,63 @@ if ($CertificatePassword) {
     $msixParams["CertificatePassword"] = $CertificatePassword
 }
 & $buildMsixScript @msixParams
+if ($LASTEXITCODE -ne 0) {
+    throw "Falló la generación del paquete MSIX para Microsoft Store."
+}
+
+# 4. Generar Metadatos BUILD_INFO.json y verificar SHA256SUMS.txt
+Write-Host ""
+Write-Host "[4/4] Consolidando metadatos de lanzamiento (BUILD_INFO.json)..." -ForegroundColor Yellow
+
+$gitCommit = ""
+$isClean = $false
+try {
+    $gitCommit = (& git rev-parse HEAD).Trim()
+    $gitStatus = (& git status --porcelain).Trim()
+    $isClean = [string]::IsNullOrEmpty($gitStatus)
+} catch {
+    Write-Warning "No se pudo determinar el estado de Git."
+}
+
+$exeFile = Join-Path $releaseDir "WinTTS-Setup-$Version.exe"
+$msixFile = Join-Path $releaseDir "WinTTS-Windows-x64-$Version.msix"
+
+$files = @()
+if (Test-Path -LiteralPath $exeFile) {
+    $exeItem = Get-Item $exeFile
+    $exeHash = (Get-FileHash -LiteralPath $exeFile -Algorithm SHA256).Hash.ToLowerInvariant()
+    $files += @{
+        name = $exeItem.Name
+        type = "installer_inno"
+        sizeBytes = $exeItem.Length
+        sha256 = $exeHash
+    }
+}
+if (Test-Path -LiteralPath $msixFile) {
+    $msixItem = Get-Item $msixFile
+    $msixHash = (Get-FileHash -LiteralPath $msixFile -Algorithm SHA256).Hash.ToLowerInvariant()
+    $files += @{
+        name = $msixItem.Name
+        type = "package_msix"
+        sizeBytes = $msixItem.Length
+        sha256 = $msixHash
+    }
+}
+
+$buildInfo = [ordered]@{
+    version = $Version
+    product = "WinTTS"
+    bundleMode = "inno+msix"
+    appGitCommit = $gitCommit
+    appSourceClean = $isClean
+    buildDate = (Get-Date).ToString("o")
+    files = $files
+}
+
+$buildInfoJson = $buildInfo | ConvertTo-Json -Depth 5
+$utf8NoBom = New-Object System.Text.UTF8Encoding($false)
+[System.IO.File]::WriteAllText((Join-Path $releaseDir "BUILD_INFO.json"), ($buildInfoJson + "`n"), $utf8NoBom)
+Write-Host "  ✅ BUILD_INFO.json generado exitosamente." -ForegroundColor Green
 
 Write-Host ""
 Write-Host "==================================================" -ForegroundColor Cyan

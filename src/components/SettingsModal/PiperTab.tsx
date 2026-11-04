@@ -1,9 +1,10 @@
-import React, { useState, useMemo, useRef, useEffect } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import { convertFileSrc } from '@tauri-apps/api/core';
 import { appCacheDir } from '@tauri-apps/api/path';
 import {
   type AppSettings,
-  type PiperCatalogModel,
+  DEFAULT_PIPER_MODEL_ID,
+  PIPER_ENGINE_SIZE_MB,
   PIPER_POPULAR_MODELS,
 } from '../../types';
 import { tauriBridge, isTauri } from '../../services/tauriBridge';
@@ -12,14 +13,12 @@ import {
   FolderOpen,
   ShieldCheck,
   Download,
-  ExternalLink,
   RotateCcw,
   Sparkles,
-  Cpu,
-  Trash2,
   Play,
   AlertTriangle,
 } from 'lucide-react';
+import { PiperCatalog } from './PiperCatalog';
 
 interface PiperTabProps {
   formState: AppSettings;
@@ -34,22 +33,11 @@ export const PiperTab: React.FC<PiperTabProps> = ({
   onSaveSettings,
   piper,
 }) => {
-  const [languageFilter, setLanguageFilter] = useState<string>('all');
   const [isTesting, setIsTesting] = useState(false);
   const [testStatus, setTestStatus] = useState<string>('');
+  const [installStatus, setInstallStatus] = useState<string>('');
+  const [modelsDirDraft, setModelsDirDraft] = useState<string | null>(null);
   const audioRef = useRef<HTMLAudioElement | null>(null);
-
-  const filteredModels = useMemo(() => {
-    if (languageFilter === 'all') return PIPER_POPULAR_MODELS;
-    return PIPER_POPULAR_MODELS.filter(
-      (m) => m.language.toLowerCase() === languageFilter.toLowerCase()
-    );
-  }, [languageFilter]);
-
-  const installedIds = useMemo(
-    () => new Set(piper.installed.map((m) => m.id)),
-    [piper.installed]
-  );
 
   useEffect(() => {
     return () => {
@@ -78,6 +66,7 @@ export const PiperTab: React.FC<PiperTabProps> = ({
       const selected = await tauriBridge.pickDirectory();
       if (selected) {
         const next = { ...formState, piperModelsDir: selected };
+        setModelsDirDraft(null);
         setFormState(next);
         onSaveSettings(next);
       }
@@ -87,17 +76,44 @@ export const PiperTab: React.FC<PiperTabProps> = ({
   };
 
   const handleResetModelsDirToAppData = () => {
+    setModelsDirDraft(null);
     const next = { ...formState, piperModelsDir: '' };
     setFormState(next);
     onSaveSettings(next);
   };
 
-  const handleInstallModel = async (model: PiperCatalogModel) => {
-    await piper.downloadModel(model);
-  };
+  /**
+   * Instala el motor de Piper dentro de la carpeta de datos de la aplicacion.
+   *
+   * Al aparecer el ejecutable, la configuracion se actualiza sola y se
+   * descarga la voz por defecto para que el motor pueda usarse de inmediato.
+   */
+  const handleInstallEngine = async () => {
+    setInstallStatus('');
 
-  const handleUninstallModel = async (modelId: string) => {
-    await piper.uninstallModel(modelId);
+    const path = await piper.installEngine();
+    if (!path) {
+      setInstallStatus('No se pudo instalar el motor de Piper.');
+      return;
+    }
+
+    const next = { ...formState, piperBinaryPath: path };
+    setFormState(next);
+    onSaveSettings(next);
+    setInstallStatus('Motor Piper instalado. Descargando la voz por defecto…');
+
+    const defaultModel = PIPER_POPULAR_MODELS.find((model) => model.id === DEFAULT_PIPER_MODEL_ID);
+    if (!defaultModel) {
+      setInstallStatus('Motor Piper instalado. Elige una voz del catalogo.');
+      return;
+    }
+
+    const downloaded = await piper.downloadModel(defaultModel);
+    setInstallStatus(
+      downloaded
+        ? `Motor Piper instalado y voz «${defaultModel.name}» descargada.`
+        : 'Motor Piper instalado, pero no se pudo descargar la voz por defecto.'
+    );
   };
 
   /** Sintetiza una frase corta con el motor para comprobar que todo funciona. */
@@ -105,7 +121,7 @@ export const PiperTab: React.FC<PiperTabProps> = ({
     setTestStatus('');
 
     if (!piper.engineReady) {
-      setTestStatus('Indica la ruta de piper.exe antes de probar el motor.');
+      setTestStatus('Instala el motor de Piper o indica la ruta de piper.exe antes de probarlo.');
       return;
     }
 
@@ -153,20 +169,19 @@ export const PiperTab: React.FC<PiperTabProps> = ({
   };
 
   return (
-    <div className="tab-content animate-fade">
+    <div className="settings-columns piper-layout animate-fade">
+      <div className="settings-column piper-setup">
       {/* Estado real del motor */}
-      <div className={`info-banner engine-status ${piper.engineReady ? 'engine-status-ok' : 'engine-status-warn'}`}>
-        {piper.engineReady ? <ShieldCheck size={18} className="info-banner-icon" /> : <AlertTriangle size={18} className="info-banner-icon" />}
+      <div className={`info-banner engine-status ${piper.engineReady ? 'engine-status-ok' : 'engine-status-info'}`}>
+        {piper.engineReady ? <ShieldCheck size={18} className="info-banner-icon" /> : <Sparkles size={18} className="info-banner-icon" />}
         <p>
           {piper.engineReady ? (
             <>
-              <strong>Motor Piper operativo.</strong> Las voces neuronales descargadas en este equipo se
-              sintetizan de forma local y sin conexión.
+              <strong>Piper está listo.</strong> Puedes usar las voces descargadas.
             </>
           ) : (
             <>
-              <strong>Motor Piper sin configurar.</strong> Indica dónde está <code>piper.exe</code>. Hasta
-              entonces las voces neuronales no pueden sonar: la aplicación no las usará en silencio.
+              Instala Piper para usar voces neuronales sin conexión.
             </>
           )}
         </p>
@@ -181,13 +196,7 @@ export const PiperTab: React.FC<PiperTabProps> = ({
 
       {/* Ejecutable */}
       <div className="setting-group">
-        <label className="setting-label">Ejecutable de Piper (piper.exe)</label>
-        <div className="setting-desc">
-          Motor de sintesis local. Descargalo desde el proyecto oficial de Piper y apunta aqui a su ruta.
-          Funciona tanto con el ejecutable <code>piper.exe</code> clasico como con el modulo
-          <code>piper</code> de Python: se invocan con <code>--model</code>, <code>--output_file</code> y
-          <code>--length_scale</code>, que ambas generaciones aceptan.
-        </div>
+        <label className="setting-label">Ubicación de Piper</label>
         <div className="input-with-button">
           <input
             type="text"
@@ -211,17 +220,68 @@ export const PiperTab: React.FC<PiperTabProps> = ({
             <span>{isTesting ? 'Probando…' : 'Probar'}</span>
           </button>
         </div>
+
+        {!piper.engineReady && (
+          <div className="engine-install-row">
+            <button
+              type="button"
+              className="btn-base btn-install-engine"
+              onClick={handleInstallEngine}
+              disabled={Boolean(piper.engineInstall)}
+              title={`Descarga el motor oficial de Piper (${PIPER_ENGINE_SIZE_MB} MB) en la carpeta de datos de la aplicacion`}
+            >
+              <Download size={14} />
+              <span>{piper.engineInstall ? 'Instalando…' : 'Instalar Piper'}</span>
+            </button>
+            <span className="setting-desc">
+              Descarga de {PIPER_ENGINE_SIZE_MB} MB.
+            </span>
+          </div>
+        )}
+
+        {piper.engineInstall && (
+          <div className="download-progress">
+            <div className="download-progress-track">
+              <div
+                className="download-progress-fill"
+                style={{
+                  width: `${
+                    piper.engineInstall.total > 0
+                      ? Math.min(
+                          100,
+                          Math.round(
+                            (piper.engineInstall.downloaded / piper.engineInstall.total) * 100
+                          )
+                        )
+                      : 0
+                  }%`,
+                }}
+              />
+            </div>
+            <span className="download-progress-label">
+              {piper.engineInstall.total > 0
+                ? `${Math.min(
+                    100,
+                    Math.round(
+                      (piper.engineInstall.downloaded / piper.engineInstall.total) * 100
+                    )
+                  )}% · `
+                : ''}
+              {(piper.engineInstall.downloaded / 1024 / 1024).toFixed(1)} MB de {PIPER_ENGINE_SIZE_MB} MB
+            </span>
+          </div>
+        )}
+
+        {installStatus && <div className="setting-desc engine-test-status">{installStatus}</div>}
         {testStatus && <div className="setting-desc engine-test-status">{testStatus}</div>}
       </div>
 
       {/* Carpeta de modelos */}
+      {(piper.installed.length > 0 || Boolean(formState.piperModelsDir)) && (
       <div className="setting-group">
         <div className="label-with-action">
           <div>
-            <label className="setting-label">Carpeta de modelos neuronales</label>
-            <div className="setting-desc">
-              Directorio local donde se guardan los pesos <code>.onnx</code> y su configuracion.
-            </div>
+            <label className="setting-label">Carpeta de voces</label>
           </div>
           <button
             type="button"
@@ -230,128 +290,31 @@ export const PiperTab: React.FC<PiperTabProps> = ({
             title="Usar la carpeta de datos de la aplicación"
           >
             <RotateCcw size={11} />
-            <span>Ruta por defecto</span>
+            <span>Restablecer</span>
           </button>
         </div>
         <div className="input-with-button">
           <input
             type="text"
             className="setting-input"
-            value={formState.piperModelsDir}
-            onChange={(e) => setFormState((prev) => ({ ...prev, piperModelsDir: e.target.value }))}
+            aria-label="Carpeta de voces"
+            title={modelsDirDraft ?? (formState.piperModelsDir || piper.modelsDir)}
+            value={modelsDirDraft ?? (formState.piperModelsDir || piper.modelsDir)}
+            onChange={(e) => {
+              setModelsDirDraft(e.target.value);
+              setFormState((prev) => ({ ...prev, piperModelsDir: e.target.value }));
+            }}
           />
           <button type="button" className="btn-base btn-examine" onClick={handlePickModelsDir}>
             <FolderOpen size={14} />
             <span>Examinar…</span>
           </button>
         </div>
-        {piper.modelsDir && (
-          <div className="setting-desc engine-effective-path">
-            <Cpu size={12} />
-            <span>Carpeta efectiva: {piper.modelsDir}</span>
-          </div>
-        )}
       </div>
+      )}
 
-      {/* Catalogo */}
-      <div className="models-catalog-section">
-        <div className="catalog-header">
-          <div className="catalog-title-wrap">
-            <Sparkles size={14} className="catalog-sparkle" />
-            <span className="catalog-title">Catalogo de Voces Neuronales (Hugging Face)</span>
-          </div>
-
-          <div className="filter-chips">
-            {['all', 'Español', 'English', 'Français', 'Deutsch', 'Português', 'Italiano'].map((lang) => (
-              <button
-                key={lang}
-                type="button"
-                className={`chip-btn ${languageFilter === lang ? 'chip-active' : ''}`}
-                onClick={() => setLanguageFilter(lang)}
-              >
-                {lang === 'all' ? 'Todos' : lang}
-              </button>
-            ))}
-          </div>
-        </div>
-
-        <div className="models-list">
-          {filteredModels.map((model) => {
-            const isInstalled = installedIds.has(model.id);
-            const isDownloading = piper.download?.modelId === model.id;
-            const progress = isDownloading ? piper.download : null;
-            const percent =
-              progress && progress.total > 0
-                ? Math.min(100, Math.round((progress.downloaded / progress.total) * 100))
-                : 0;
-
-            return (
-              <div key={model.id} className="model-card">
-                <div className="model-card-info">
-                  <div className="model-card-name-row">
-                    <span className="model-card-name">{model.name}</span>
-                    <span className="model-quality-badge">{model.quality.toUpperCase()}</span>
-                  </div>
-                  <div className="model-card-meta">
-                    <span>{model.locale}</span>
-                    <span>•</span>
-                    <span>{model.gender === 'Female' ? 'Mujer' : 'Hombre'}</span>
-                    <span>•</span>
-                    <span>~{model.sizeMB} MB</span>
-                  </div>
-
-                  {progress && (
-                    <div className="download-progress">
-                      <div className="download-progress-track">
-                        <div className="download-progress-fill" style={{ width: `${percent}%` }} />
-                      </div>
-                      <span className="download-progress-label">
-                        {percent}% · {(progress.downloaded / 1024 / 1024).toFixed(1)} MB
-                      </span>
-                    </div>
-                  )}
-                </div>
-
-                <div className="model-card-actions">
-                  <a
-                    className="btn-huggingface"
-                    href={model.huggingFaceUrl}
-                    onClick={(e) => {
-                      e.preventDefault();
-                      tauriBridge.openExternalUrl(model.huggingFaceUrl);
-                    }}
-                    title="Ver en Hugging Face"
-                  >
-                    <ExternalLink size={13} />
-                  </a>
-
-                  {isInstalled ? (
-                    <button
-                      type="button"
-                      className="btn-installed"
-                      onClick={() => handleUninstallModel(model.id)}
-                      title="Eliminar el modelo de este equipo"
-                    >
-                      <Trash2 size={13} />
-                      <span>Instalado</span>
-                    </button>
-                  ) : (
-                    <button
-                      type="button"
-                      className="btn-install"
-                      onClick={() => handleInstallModel(model)}
-                      disabled={isDownloading}
-                    >
-                      <Download size={13} />
-                      <span>{isDownloading ? 'Descargando…' : 'Descargar'}</span>
-                    </button>
-                  )}
-                </div>
-              </div>
-            );
-          })}
-        </div>
       </div>
+      <PiperCatalog piper={piper} />
     </div>
   );
 };

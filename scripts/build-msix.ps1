@@ -166,10 +166,33 @@ if ($CertificatePath -and (Test-Path -LiteralPath $CertificatePath)) {
 }
 
 # 6. Generar Checksum SHA-256
+# Se actualiza la linea de este artefacto sin borrar las demas: SHA256SUMS.txt
+# recoge los artefactos previstos para publicacion y cada script debe
+# aportar solo el suyo.
 $hash = (Get-FileHash -LiteralPath $msixPath -Algorithm SHA256).Hash.ToLowerInvariant()
 $hashLine = "$hash  $artifactName"
 $hashPath = Join-Path $releaseDir "SHA256SUMS.txt"
-Set-Content -LiteralPath $hashPath -Value $hashLine -Encoding utf8
+$existing = @()
+if (Test-Path -LiteralPath $hashPath) {
+    $existing = Get-Content -LiteralPath $hashPath | Where-Object { $_ -notmatch [regex]::Escape($artifactName) }
+}
+$updated = @($existing; $hashLine)
+$utf8NoBom = New-Object System.Text.UTF8Encoding($false)
+[System.IO.File]::WriteAllText($hashPath, (($updated -join "`n") + "`n"), $utf8NoBom)
+
+# Sincronizar copia en '12. Releases\WinTTS'
+$releasesGlobalDir = 'D:\Proyectos\biglexj\12. Releases'
+if (Test-Path -LiteralPath $releasesGlobalDir) {
+    $winTtsReleaseDir = Join-Path $releasesGlobalDir "WinTTS"
+    if (-not (Test-Path -LiteralPath $winTtsReleaseDir)) {
+        New-Item -ItemType Directory -Path $winTtsReleaseDir -Force | Out-Null
+    }
+    Copy-Item -LiteralPath $msixPath -Destination (Join-Path $winTtsReleaseDir $artifactName) -Force
+    if (Test-Path -LiteralPath $hashPath) {
+        Copy-Item -LiteralPath $hashPath -Destination (Join-Path $winTtsReleaseDir "SHA256SUMS.txt") -Force
+    }
+    Write-Host "  ✅ Copia MSIX sincronizada en 12. Releases\WinTTS\$artifactName" -ForegroundColor Green
+}
 
 $fileSizeMB = [math]::Round((Get-Item $msixPath).Length / 1MB, 2)
 

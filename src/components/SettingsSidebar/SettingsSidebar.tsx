@@ -1,7 +1,7 @@
 import React from 'react';
 import type { PlaybackState, SpeechSettings, SystemVoice } from '../../types';
 import { VoiceSelector } from '../VoiceSelector/VoiceSelector';
-import { Play, Pause, Square, Download } from 'lucide-react';
+import { Play, Pause, Square, Download, FolderOpen, Save } from 'lucide-react';
 import './SettingsSidebar.css';
 
 interface SettingsSidebarProps {
@@ -12,10 +12,12 @@ interface SettingsSidebarProps {
   onPlayPause: () => void;
   onStop: () => void;
   onExport: (format: 'wav' | 'mp3') => void;
+  onOpenDocument: () => void;
+  onSaveDocument: () => void;
+  onSaveDocumentAs: () => void;
   isExporting?: boolean;
-  enablePiper?: boolean;
+  piperActive?: boolean;
   systemVoiceLanguages?: string[];
-  piperEngineReady?: boolean;
 }
 
 export const SettingsSidebar: React.FC<SettingsSidebarProps> = ({
@@ -26,10 +28,12 @@ export const SettingsSidebar: React.FC<SettingsSidebarProps> = ({
   onPlayPause,
   onStop,
   onExport,
+  onOpenDocument,
+  onSaveDocument,
+  onSaveDocumentAs,
   isExporting = false,
-  enablePiper = true,
+  piperActive = false,
   systemVoiceLanguages = ['es'],
-  piperEngineReady = false,
 }) => {
   const handleVoiceChange = (newVoiceName: string) => {
     onSettingsChange({
@@ -110,6 +114,24 @@ export const SettingsSidebar: React.FC<SettingsSidebarProps> = ({
   return (
     <aside className="sidebar-container">
       <div className="sidebar-scrollable">
+        <h2 className="sidebar-document-title">Documento</h2>
+        <div className="sidebar-document-actions" role="group" aria-label="Documento">
+          <button className="btn-base" onClick={onOpenDocument} title="Abrir un documento .md o .txt (Ctrl+O)">
+            <FolderOpen size={15} />
+            <span>Abrir</span>
+          </button>
+          <button className="btn-base" onClick={onSaveDocument} title="Guardar el documento (Ctrl+S)">
+            <Save size={15} />
+            <span>Guardar</span>
+          </button>
+          <button className="btn-base sidebar-save-as" onClick={onSaveDocumentAs} title="Guardar con otro nombre (Ctrl+Shift+S)">
+            <Save size={15} />
+            <span>Guardar como</span>
+          </button>
+        </div>
+
+        <div className="sidebar-divider" />
+
         <h2 className="sidebar-title">Narración</h2>
         <p className="sidebar-description">Ajusta cómo quieres escuchar y exportar el texto.</p>
 
@@ -130,17 +152,16 @@ export const SettingsSidebar: React.FC<SettingsSidebarProps> = ({
           />
         </div>
 
-        {/* Selector de Voz Piper Neural */}
-        {enablePiper && (
+        {/* Selector de Voz Piper Neural.
+            Las voces neuronales son opcionales: si el motor no esta instalado,
+            esta seccion no se muestra en absoluto. */}
+        {piperActive && (
           <div className="field-group">
             <div className="field-label-row">
               <label className="field-label">VOZ PIPER (NEURAL)</label>
-              {isPiperActive &&
-                (piperEngineReady ? (
-                  <span className="active-voice-pill active-piper-pill">ACTIVA</span>
-                ) : (
-                  <span className="active-voice-pill active-piper-pill piper-pill-warn">SIN MOTOR</span>
-                ))}
+              {isPiperActive && (
+                <span className="active-voice-pill active-piper-pill">ACTIVA</span>
+              )}
             </div>
             <VoiceSelector
               voices={piperVoices}
@@ -151,12 +172,6 @@ export const SettingsSidebar: React.FC<SettingsSidebarProps> = ({
               isActive={isPiperActive}
               placeholder="Seleccionar voz neuronal…"
             />
-            {enablePiper && !piperEngineReady && (
-              <p className="sidebar-hint">
-                Para usar las voces neuronales indica la ruta de <code>piper.exe</code> en Ajustes → Motor
-                Piper TTS. Hasta entonces la aplicación no las usará en silencio.
-              </p>
-            )}
           </div>
         )}
 
